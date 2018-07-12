@@ -3,10 +3,7 @@ const mongoose = require("mongoose")
 
 module.exports = function() {
   mongoose.Promise = global.Promise
-  var db = mongoose.connect(
-    CONFIG.MONGODB_URI,
-    { useMongoClient: true }
-  )
+  var db = mongoose.connect(CONFIG.MONGODB_URI)
   mongoose.connection
     .on("error", function(err) {
       console.log(

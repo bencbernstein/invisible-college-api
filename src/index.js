@@ -4,7 +4,7 @@ const { graphql, buildSchema } = require("graphql")
 const cors = require("cors")
 
 const userSchema = require("./graphql/index").userSchema
-
+const CONFIG = require("./lib/config")
 const app = express()
 
 const mongoose = require("./lib/db/index")
@@ -46,6 +46,6 @@ app.use(
 
 app.use("*", cors())
 
-app.listen(4000, () =>
-  console.log("GraphQL server starting at localhost:4000/graphql")
+app.listen(CONFIG.PORT, () =>
+  console.log("GraphQL server starting at " + CONFIG.PORT)
 )
