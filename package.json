@@ -12,7 +12,8 @@
     "express-graphql": "^0.6.12",
     "graphql": "^0.13.2",
     "graphql-tag": "^2.9.2",
-    "mongoose": "^5.2.3"
+    "mongoose": "^5.2.3",
+    "nodemon": "^1.18.1"
   },
   "engines": {
     "node": "8.6.0"
