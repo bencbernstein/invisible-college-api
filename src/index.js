@@ -1,51 +1,32 @@
 const express = require("express")
-const graphqlHTTP = require("express-graphql")
-const { graphql, buildSchema } = require("graphql")
+const bodyParser = require("body-parser")
+const { ApolloServer, gql } = require("apollo-server-express")
 const cors = require("cors")
 
-const userSchema = require("./graphql/index").userSchema
-
-const app = express()
-
+const CONFIG = require("./lib/config")
+const schema = require("./gql/schema")
+const TextController = require("./controllers/text")
 const mongoose = require("./lib/db/index")
 const db = mongoose()
 
-const extensions = ({
-  document,
-  variables,
-  operationName,
-  result,
-  context
-}) => {
-  return {
-    runTime: Date.now() - (context ? context.startTime : Date.now())
-  }
-}
+const server = new ApolloServer({ schema })
 
-const formatError = error => ({
-  message: error.message,
-  locations: error.locations,
-  stack: error.stack ? error.stack.split("\n") : [],
-  path: error.path
-})
-
-app.use(
-  "/graphql",
-  cors(),
-  graphqlHTTP({
-    context: { startTime: Date.now() },
-    schema: userSchema,
-    rootValue: global,
-    graphiql: true,
-    pretty: true,
-    livereload: true,
-    extensions,
-    formatError
-  })
-)
+const app = express()
 
 app.use("*", cors())
 
-app.listen(4000, () =>
-  console.log("GraphQL server starting at localhost:4000/graphql")
-)
+app.use("/parseText", function(req, res, next) {
+  return TextController.parse(req, res, next)
+})
+
+server.applyMiddleware({ app })
+
+app.use(bodyParser.json({ limit: "50mb" }))
+
+if (process.env.NODE_ENV !== "test") {
+  app.listen(CONFIG.PORT, () =>
+    console.log("GraphQL server starting at " + CONFIG.PORT)
+  )
+}
+
+module.exports = app
