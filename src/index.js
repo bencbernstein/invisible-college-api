@@ -6,7 +6,8 @@ const cors = require("cors")
 const CONFIG = require("./lib/config")
 const schema = require("./gql/schema")
 const TextController = require("./controllers/text")
-const mongoose = require("./lib/db/index")
+
+const mongoose = require("./lib/db")
 const db = mongoose()
 
 const server = new ApolloServer({ schema })
@@ -23,10 +24,8 @@ server.applyMiddleware({ app })
 
 app.use(bodyParser.json({ limit: "50mb" }))
 
-if (process.env.NODE_ENV !== "test") {
-  app.listen(CONFIG.PORT, () =>
-    console.log("GraphQL server starting at " + CONFIG.PORT)
-  )
-}
+app.listen(CONFIG.PORT, () =>
+  console.log("GraphQL server starting at " + CONFIG.PORT)
+)
 
 module.exports = app
