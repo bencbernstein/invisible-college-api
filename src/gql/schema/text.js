@@ -16,7 +16,7 @@ type Passage {
   id: ID!
   startIdx: Int!
   endIdx: Int!
-  value: String!
+  value: String
   found: [String]
   tagged: [Tagged]!
 }
