@@ -25,7 +25,7 @@ var wordSchema = new Schema({
     type: [
       {
         value: { type: String, required: true },
-        id: { type: Schema.Types.ObjectId, required: true },
+        id: { type: Schema.Types.ObjectId },
         choiceSetIds: { type: [Schema.Types.ObjectId], default: [] }
       }
     ],
@@ -39,7 +39,8 @@ var wordSchema = new Schema({
     },
     default: {}
   },
-  obscurity: Number
+  obscurity: Number,
+  images: { type: [Schema.Types.ObjectId], required: true, default: [] }
 })
 
 const Model = mongoose.model("Word", wordSchema)

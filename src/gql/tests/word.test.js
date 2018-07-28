@@ -1,3 +1,4 @@
+const _ = require("underscore")
 const { graphql } = require("graphql")
 const chai = require("chai")
 const should = chai.should()
@@ -95,6 +96,30 @@ describe("words", () => {
     chai.assert.equal(enriched.unverified.definition, definition)
   })
 
+  it.only("updates a word", async function() {
+    const encoded = encodeURIComponent(
+      JSON.stringify(_.extend({}, word, { obscurity: 2, id: word._id }))
+    )
+
+    const query = `
+      mutation {
+        updateWord (word: "${encoded}") {
+          id
+          obscurity
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const updated = result.data.updateWord
+
+    chai.assert.equal(updated.obscurity, 2)
+    chai.assert.equal(updated.id, word._id.toString())
+  })
+
   it("remove a word", async function() {
     const query = `
       mutation {
@@ -111,5 +136,25 @@ describe("words", () => {
     const removed = result.data.removeWord
 
     chai.assert.equal(removed.id, word._id.toString())
+  })
+
+  it("gets all the keywords", async function() {
+    const query = `
+      query {
+        keywords {
+          words
+          choices
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { keywords } = result.data
+
+    chai.assert.isNotEmpty(keywords.words)
+    chai.assert.isNotEmpty(keywords.choices)
   })
 })

@@ -49,7 +49,7 @@ describe("texts", () => {
   })
 
   it("saves passages for a text", async () => {
-    const ranges = [[1, 3], [10, 14]]
+    const ranges = [[0, 1], [10, 14]]
 
     const query = `
       mutation {
@@ -96,5 +96,60 @@ describe("texts", () => {
     const updated = result.data.removePassage
 
     chai.assert.equal(updated.passages.length, text.passages.length - 1)
+  })
+
+  it("updates a passages for a text", async () => {
+    const newPassage = {
+      id: text.passages[0]._id,
+      value: "something different",
+      tagged: [
+        {
+          value: "The",
+          tag: "NN",
+          isFocusWord: true
+        }
+      ]
+    }
+    text.passages[0].value = text.passages[0].tagged[0].value = "The"
+    text.passages[0].tagged[0].tag = "NN"
+    text.passages[0].tagged[0].isFocusWord = true
+
+    const encoded = encodeURIComponent(JSON.stringify(newPassage))
+
+    const query = `
+      mutation {
+        updatePassage (update: "${encoded}") {
+          id
+          passages {
+            value
+            tagged {
+              tag
+              isFocusWord
+              value
+            }
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const updated = result.data.updatePassage
+
+    chai.assert.equal(updated.passages[0].value, newPassage.value)
+    chai.assert.equal(
+      updated.passages[0].tagged[0].value,
+      newPassage.tagged[0].value
+    )
+    chai.assert.equal(
+      updated.passages[0].tagged[0].tag,
+      newPassage.tagged[0].tag
+    )
+    chai.assert.equal(
+      updated.passages[0].tagged[0].isFocusWord,
+      newPassage.tagged[0].isFocusWord
+    )
   })
 })

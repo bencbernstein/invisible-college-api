@@ -10,8 +10,19 @@ var textSchema = new Schema({
       {
         startIdx: { type: Number, required: true, min: 0 },
         endIdx: { type: Number, required: true },
-        passage: { type: String, required: true },
-        found: { type: [String], required: true, default: [] }
+        value: { type: String, required: true },
+        found: { type: [String], required: true, default: [] },
+        tagged: {
+          type: [
+            {
+              value: { type: String, required: true },
+              tag: { type: String, required: true },
+              isFocusWord: { type: Boolean, required: true, default: false },
+              isPunctuation: { type: Boolean, required: true, default: false }
+            }
+          ],
+          required: true
+        }
       }
     ],
     default: []

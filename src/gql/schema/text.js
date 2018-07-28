@@ -1,14 +1,24 @@
 const _u = require("underscore")
+const pos = require("pos")
 
 const TextModel = require("../../models/text")
 
 const textTypeDefs = `
+type Tagged {
+  id: ID!
+  value: String!
+  tag: String!
+  isFocusWord: Boolean!
+  isPunctuation: Boolean!
+}
+
 type Passage {
   id: ID!
   startIdx: Int!
   endIdx: Int!
-  passage: String!
+  value: String!
   found: [String]
+  tagged: [Tagged]!
 }
 
 type Text {
@@ -37,6 +47,10 @@ extend type Mutation {
     textId: ID!
     passageId: ID!
   ): Text  
+
+  updatePassage (
+    update: String!
+  ): Text    
 }
 `
 
@@ -62,9 +76,12 @@ const textResolvers = {
       const update = params.ranges.map(range => {
         const [startIdx, endIdx] = range
         const sliced = tokenized.slice(startIdx, endIdx)
-        const passage = sliced.map(s => s.sentence).join(" ")
+        const value = sliced.map(s => s.sentence).join(" ")
+        const words = new pos.Lexer().lex(value)
+        const tagger = new pos.Tagger()
+        const tagged = tagger.tag(words).map(t => ({ value: t[0], tag: t[1] }))
         const found = _u.uniq(_u.flatten(sliced.map(s => s.found)))
-        return { startIdx, endIdx, passage, found }
+        return { startIdx, endIdx, value, found }
       })
 
       passages = passages.concat(update)
@@ -79,6 +96,19 @@ const textResolvers = {
       return TextModel.findByIdAndUpdate(
         params.textId,
         { $pull: { passages: { _id: params.passageId } } },
+        { new: true }
+      )
+    },
+    async updatePassage(_, params) {
+      const decoded = JSON.parse(decodeURIComponent(params.update))
+      return TextModel.findOneAndUpdate(
+        { "passages._id": decoded.id },
+        {
+          $set: {
+            "passages.$.value": decoded.value,
+            "passages.$.tagged": decoded.tagged
+          }
+        },
         { new: true }
       )
     }

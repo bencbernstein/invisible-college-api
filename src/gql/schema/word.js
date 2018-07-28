@@ -22,6 +22,12 @@ type Unverified {
   synonyms: [String]
 }
 
+type Tag {
+  id: ID
+  value: String!
+  choiceSetIds: [String]
+}
+
 type Word {
   value: String!
   isDecomposable: Boolean!
@@ -29,6 +35,8 @@ type Word {
   components: [Component]
   definition: [Definition]!
   obscurity: Int
+  images: [String]
+  tags: [Tag]
   unverified: Unverified
 }
 
@@ -51,10 +59,14 @@ extend type Mutation {
   removeWord (
     id: ID!
   ): Word
+
+  updateWord (
+    word: String!
+  ): Word
 }
 
 extend type Query {
-  word(id: ID!): Word
+  word(id: ID!): Word 
 }
 
 extend type Query {
@@ -128,6 +140,10 @@ const wordResolvers = {
     },
     async removeWord(_, params) {
       return WordModel.findByIdAndRemove(params.id)
+    },
+    async updateWord(_, params) {
+      const decoded = JSON.parse(decodeURIComponent(params.word))
+      return WordModel.findByIdAndUpdate(decoded.id, decoded, { new: true })
     }
   }
 }
