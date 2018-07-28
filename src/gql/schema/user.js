@@ -1,4 +1,4 @@
-var UserModel = require("../../models/user")
+const UserModel = require("../../models/user")
 
 const userTypeDefs = `
 type User {
