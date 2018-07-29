@@ -1,16 +1,25 @@
+const _u = require("underscore")
 const UserModel = require("../../models/user")
 
 const userTypeDefs = `
+type Bookmark {
+  textId: String!
+  sentenceIdx: Int!
+}
+
 type User {
   firstName: String
   lastName: String
   id: ID!
   email: String!
   password: String!
+  bookmarks: [Bookmark]!
 }
 
 type Query {
   users: [User]
+
+  user(id: ID!): User
 }
 
 type Mutation {
@@ -34,6 +43,12 @@ type Mutation {
   removeUser (
     id: ID!
   ): User
+
+  saveBookmark (
+    userId: String!
+    textId: String!
+    sentenceIdx: Int!
+  ): User
 }
 
 schema {
@@ -44,6 +59,10 @@ schema {
 
 const userResolvers = {
   Query: {
+    user(_, params) {
+      return UserModel.findById(params.id).catch(err => new Error(err))
+    },
+
     users() {
       return UserModel.find().catch(err => new Error(err))
     }
@@ -77,6 +96,25 @@ const userResolvers = {
         { $set: { email: params.email } },
         { new: true }
       )
+    },
+    async saveBookmark(_, params) {
+      const user = await UserModel.findById(params.userId)
+      const bookmarks = user.bookmarks
+      const bookmark = {
+        textId: params.textId,
+        sentenceIdx: parseInt(params.sentenceIdx, 10)
+      }
+      const idx = _u.findIndex(
+        bookmarks,
+        b => b.textId.toString() === bookmark.textId
+      )
+      if (idx > -1) {
+        bookmarks[idx] = bookmark
+      } else {
+        bookmarks.push(bookmark)
+      }
+      user.save()
+      return user
     }
   }
 }
