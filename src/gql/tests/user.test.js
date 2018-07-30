@@ -8,6 +8,7 @@ const { seedDb } = require("../../test/helpers")
 const User = require("../../models/user")
 
 const user = require("./mocks/user").mock
+const text = require("./mocks/text").mock
 
 const notFoundEmail = "wrong@gmail.com"
 const incorrectPassword = "super-wrong-password"
@@ -23,6 +24,10 @@ describe("users", () => {
           id
           email
           password
+          bookmarks {
+            textId
+            sentenceIdx
+          }
         }
       }
     `
@@ -121,5 +126,53 @@ describe("users", () => {
     const result = await graphql(schema, query, rootValue, context)
 
     chai.assert.equal(result.data.removeUser.id, `${user._id}`)
+  })
+
+  it("adds a new bookmark for a user", async () => {
+    const query = `
+      mutation {
+        saveBookmark(userId: "${user._id}", textId: "${
+      text._id
+    }", sentenceIdx: ${400}) {
+          id
+          bookmarks {
+            textId
+            sentenceIdx
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const updated = result.data.saveBookmark
+
+    chai.assert.equal(updated.bookmarks.length, 2)
+  })
+
+  it("updates a bookmark for a user", async () => {
+    const query = `
+      mutation {
+        saveBookmark(userId: "${user._id}", textId: "${
+      user.bookmarks[0].textId
+    }", sentenceIdx: ${400}) {
+          id
+          bookmarks {
+            textId
+            sentenceIdx
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const updated = result.data.saveBookmark
+
+    chai.assert.equal(updated.bookmarks.length, 1)
   })
 })
