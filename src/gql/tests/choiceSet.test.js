@@ -8,12 +8,13 @@ const { seedDb } = require("../../test/helpers")
 const ChoiceSet = require("../../models/choiceSet")
 
 const choiceSet = require("./mocks/choiceSet").mock
+const choiceSetMocks = require("./mocks/choiceSet").mocks
 const newChoice = "tofuavore"
 
 describe("choice sets", () => {
   beforeEach(async () => await seedDb())
 
-  it("return 1 choice set with 1 choice set in the db", async function() {
+  it("returns choice sets", async function() {
     const query = `
       query {
         choiceSets {
@@ -28,7 +29,7 @@ describe("choice sets", () => {
     const result = await graphql(schema, query, rootValue, context)
     const { choiceSets } = result.data
 
-    chai.assert.equal(choiceSets.length, 1)
+    chai.assert.equal(choiceSets.length, choiceSetMocks.length)
   })
 
   it("adds a choice to a choice set", async function() {

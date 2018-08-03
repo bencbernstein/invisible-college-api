@@ -30,6 +30,7 @@ type Word {
   isDecomposable: Boolean!
   id: ID!
   components: [Component]
+  synonyms: [String]
   definition: [Definition]!
   obscurity: Int
   images: [String]
