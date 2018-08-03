@@ -5,22 +5,9 @@ const ID2 = mongoose.Types.ObjectId()
 
 const word = {
   _id: ID,
-  value: "lion",
-  isDecomposable: false,
-  definition: [
-    {
-      highlight: false,
-      value: "a large African cat"
-    }
-  ],
-  obscurity: 5,
-  images: []
-}
-
-const word2 = {
-  _id: ID2,
   value: "nebula",
   isDecomposable: true,
+  synonyms: ["galaxy"],
   components: [
     {
       value: "nebul",
@@ -49,14 +36,206 @@ const word2 = {
   tags: [
     {
       value: "lion",
-      id: word._id,
+      id: ID2,
       choiceSetIds: []
     }
   ],
-  images: []
+  unverified: {
+    definition: "a super cool unverified definition",
+    synonyms: ["solar system"],
+    tags: ["dwarf star", "neutron"]
+  },
+  images: [require("./image").mock._id]
 }
+
+const words = [
+  {
+    _id: ID2,
+    value: "lion",
+    isDecomposable: false,
+    synonyms: [],
+    definition: [
+      {
+        highlight: false,
+        value: "a large African cat"
+      }
+    ],
+    tags: [
+      {
+        value: "Africa"
+      },
+      {
+        value: "food chain"
+      },
+      {
+        value: "king"
+      }
+    ],
+    obscurity: 5,
+    images: []
+  },
+  {
+    _id: mongoose.Types.ObjectId(),
+    value: "gamete",
+    isDecomposable: true,
+    synonyms: [],
+    components: [
+      {
+        isRoot: true,
+        value: "gam"
+      },
+      {
+        isRoot: false,
+        value: "ete"
+      }
+    ],
+    definition: [
+      {
+        value: "a cell that joins with or ",
+        highlight: false
+      },
+      {
+        value: "marries",
+        highlight: true
+      },
+      {
+        value: " another cell during fertilization",
+        highlight: false
+      }
+    ],
+    obscurity: 5,
+    images: []
+  },
+  {
+    _id: mongoose.Types.ObjectId(),
+    value: "magnanimous",
+    isDecomposable: true,
+    synonyms: [],
+    components: [
+      {
+        isRoot: true,
+        value: "magn"
+      },
+      {
+        isRoot: true,
+        value: "anim"
+      },
+      {
+        isRoot: false,
+        value: "ous"
+      }
+    ],
+    definition: [
+      {
+        value: "generous, having a ",
+        highlight: false
+      },
+      {
+        value: "large",
+        highlight: true
+      },
+      {
+        value: " ",
+        highlight: false
+      },
+      {
+        value: "soul",
+        highlight: true
+      }
+    ],
+    obscurity: 5,
+    images: []
+  },
+  {
+    _id: mongoose.Types.ObjectId(),
+    value: "cardiogram",
+    isDecomposable: true,
+    synonyms: [],
+    components: [
+      {
+        isRoot: true,
+        value: "cardi"
+      },
+      {
+        isRoot: false,
+        value: "o"
+      },
+      {
+        isRoot: true,
+        value: "gram"
+      }
+    ],
+    tags: [
+      {
+        value: "hospital"
+      },
+      {
+        value: "heart"
+      },
+      {
+        value: "recording"
+      }
+    ],
+    definition: [
+      {
+        value: "a ",
+        highlight: false
+      },
+      {
+        value: "recording",
+        highlight: true
+      },
+      {
+        value: " of the activity of the ",
+        highlight: false
+      },
+      {
+        value: "heart",
+        highlight: true
+      }
+    ],
+    obscurity: 5,
+    images: []
+  },
+  {
+    _id: mongoose.Types.ObjectId(),
+    value: "keratosis",
+    isDecomposable: true,
+    synonyms: [],
+    components: [
+      {
+        isRoot: true,
+        value: "ker"
+      },
+      {
+        isRoot: false,
+        value: "at"
+      },
+      {
+        isRoot: false,
+        value: "osis"
+      }
+    ],
+    definition: [
+      {
+        value: "a medical condition in which a hard ",
+        highlight: false
+      },
+      {
+        value: "horn",
+        highlight: true
+      },
+      {
+        value: "-like substance grows on the skin",
+        highlight: false
+      }
+    ],
+    obscurity: 5,
+    images: []
+  }
+]
 
 module.exports = {
   mock: word,
-  mocks: [word, word2]
+  mocks: words.concat(word)
 }

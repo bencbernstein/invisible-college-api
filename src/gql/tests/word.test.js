@@ -9,6 +9,7 @@ const schema = require("./../schema")
 const Word = require("../../models/word")
 
 const word = require("./mocks/word").mock
+const wordMocks = require("./mocks/word").mocks
 
 const newWord = "factory"
 const definition =
@@ -32,7 +33,7 @@ describe("words", () => {
     const result = await graphql(schema, query, rootValue, context)
     const { words } = result.data
 
-    chai.assert.equal(words.length, 1)
+    chai.assert.equal(words.length, wordMocks.length)
   })
 
   it("finds a word by its id", async function() {
@@ -96,7 +97,7 @@ describe("words", () => {
     chai.assert.equal(enriched.unverified.definition, definition)
   })
 
-  it.only("updates a word", async function() {
+  it("updates a word", async function() {
     const encoded = encodeURIComponent(
       JSON.stringify(_.extend({}, word, { obscurity: 2, id: word._id }))
     )

@@ -4,7 +4,7 @@ const Schema = mongoose.Schema
 var wordSchema = new Schema({
   value: { type: String, required: true },
   isDecomposable: { type: Boolean, required: true, default: false },
-  synonyms: { type: [Schema.Types.ObjectId], default: [] },
+  synonyms: { type: [String], default: [] },
   components: {
     type: [
       {
@@ -42,6 +42,14 @@ var wordSchema = new Schema({
   obscurity: Number,
   images: { type: [Schema.Types.ObjectId], required: true, default: [] }
 })
+
+wordSchema.methods.simpleDefinition = function() {
+  return this.definition.map(d => d.value).join("")
+}
+
+wordSchema.methods.highlightedDefinition = function() {
+  return this.definition.map(d => ({ value: d.value, highlight: d.highlight }))
+}
 
 const Model = mongoose.model("Word", wordSchema)
 module.exports = Model

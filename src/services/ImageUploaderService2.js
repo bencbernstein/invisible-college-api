@@ -28,6 +28,7 @@ const findOrCreateWord = async value => {
 const uploadImage = async data => {
   let { image, words } = data
 
+  console.log("words: " + words.join(", "))
   const buf = base64encode(image)
   words = await Promise.all(words.map(findOrCreateWord))
 
@@ -36,17 +37,14 @@ const uploadImage = async data => {
       throw new Error(error.message)
     }
 
-    console.log(image._id + " created")
+    console.log(image._id + "image created")
 
     WordModel.updateMany(
       { _id: { $in: words } },
       {
         $push: { images: [image._id] }
       },
-      { new: true },
-      (error, result) => {
-        console.log(result)
-      }
+      { new: true }
     )
   })
 }
