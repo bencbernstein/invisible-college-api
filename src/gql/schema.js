@@ -6,6 +6,10 @@ const { wordTypeDefs, wordResolvers } = require("./schema/word")
 const { choiceSetTypeDefs, choiceSetResolvers } = require("./schema/choiceSet")
 const { keywordTypeDefs, keywordResolvers } = require("./schema/keyword")
 const { questionTypeDefs, questionResolvers } = require("./schema/question")
+const {
+  questionSequenceTypeDefs,
+  questionSequenceResolvers
+} = require("./schema/questionSequence")
 
 module.exports = makeExecutableSchema({
   typeDefs: [
@@ -14,7 +18,8 @@ module.exports = makeExecutableSchema({
     wordTypeDefs,
     choiceSetTypeDefs,
     keywordTypeDefs,
-    questionTypeDefs
+    questionTypeDefs,
+    questionSequenceTypeDefs
   ],
   resolvers: [
     userResolvers,
@@ -22,6 +27,7 @@ module.exports = makeExecutableSchema({
     wordResolvers,
     choiceSetResolvers,
     keywordResolvers,
-    questionResolvers
+    questionResolvers,
+    questionSequenceResolvers
   ]
 })

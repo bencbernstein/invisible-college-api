@@ -9,7 +9,13 @@ module.exports = async (doc, redHerringDocs, reverse) =>
     doc.images.map(async id => {
       const questions = []
 
-      const imageBase64 = toBase64(await ImageModel.findById(id))
+      const doc = await ImageModel.findById(id)
+
+      if (!doc) {
+        return questions
+      }
+
+      const imageBase64 = toBase64(doc)
 
       if (reverse === true || reverse === undefined) {
         let params = {}
