@@ -38,11 +38,24 @@ module.exports = async (id, type, reverse = false) => {
     true
   )
 
+  const params = [sentences, reverse]
+
+  const generate = async TYPE =>
+    _
+      .compact(_.flatten(await TYPES[TYPE](...params)))
+      .map(q => _.extend({}, q, { TYPE }))
+
+  let questions
+
   if (type) {
-    return _.compact(_.flatten(await TYPES[type](sentences, reverse)))
+    questions = await generate(type)
+  } else {
+    questions = _.keys(TYPES).map(generate)
+    questions = _.flatten(await Promise.all(questions))
   }
 
-  return await Promise.all(
-    _.flatten([sentenceToPoS].map(fn => fn(passages, reverse)))
-  )
+  const text = { id, value: doc.name }
+  questions.forEach(q => (q.sources = { text }))
+
+  return questions
 }

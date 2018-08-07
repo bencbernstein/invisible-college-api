@@ -48,7 +48,8 @@ module.exports = async (id, TYPE, reverse) => {
     questions = _.flatten(await Promise.all(questions))
   }
 
-  questions.forEach(q => (q.sources = { word: id }))
+  const word = { id, value: doc.value }
+  questions.forEach(q => (q.sources = { word }))
 
   return questions
 }
