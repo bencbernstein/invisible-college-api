@@ -30,7 +30,7 @@ const getRedHerringDocs = async exclude =>
     ])
   )
 
-module.exports = async (id, TYPE, reverse) => {
+module.exports = async (id, category, TYPE, reverse) => {
   const doc = await WordModel.findById(id)
   const redHerringDocs = await getRedHerringDocs(id)
 
@@ -39,7 +39,7 @@ module.exports = async (id, TYPE, reverse) => {
   const params = [doc, redHerringDocs, reverse]
 
   const generate = async TYPE =>
-    _.flatten(await TYPES[TYPE](...params)).map(q => _.extend({}, q, { TYPE }))
+    _.flatten(await TYPES[TYPE](...params)).map(q => _.extend({}, q, { TYPE, categories: category }))
 
   if (TYPE) {
     questions = await generate(TYPE)

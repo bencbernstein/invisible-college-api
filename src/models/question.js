@@ -1,8 +1,18 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
+const categories = require("../lib/categories")
+
 const questionSchema = new Schema({
   TYPE: { type: String, required: true },
+  categories: {
+    type: [
+      {
+        type: String,
+        enum: categories
+      }
+    ]
+  },
   prompt: {
     type: [
       {

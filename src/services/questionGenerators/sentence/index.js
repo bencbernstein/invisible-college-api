@@ -30,7 +30,7 @@ const sentenceTokenize = tagged => {
   return arr
 }
 
-module.exports = async (id, type, reverse = false) => {
+module.exports = async (id, category, type, reverse = false) => {
   const doc = await TextModel.findById(id)
 
   const sentences = _.flatten(
@@ -43,7 +43,7 @@ module.exports = async (id, type, reverse = false) => {
   const generate = async TYPE =>
     _
       .compact(_.flatten(await TYPES[TYPE](...params)))
-      .map(q => _.extend({}, q, { TYPE }))
+      .map(q => _.extend({}, q, { TYPE, categories: category }))
 
   let questions
 

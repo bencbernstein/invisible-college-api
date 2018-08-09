@@ -41,10 +41,21 @@ const questionSequenceResolvers = {
 
     async questionSequence(_, params) {
       const questionSequence = await QuestionSequenceModel.findById(params.id)
+
       const fullQuestions = await QuestionModel.find({
         _id: { $in: questionSequence.questions }
       })
-      return _u.extend(questionSequence, { fullQuestions })
+
+      const ordered = []
+
+      questionSequence.questions.forEach(id => {
+        const q = _u.find(fullQuestions, q => q._id.equals(id))
+        if (q) {
+          ordered.push(q)
+        }
+      })
+
+      return _u.extend(questionSequence, { fullQuestions: ordered })
     }
   },
   Mutation: {
