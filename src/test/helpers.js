@@ -40,7 +40,13 @@ const seedCollections = async () => {
 
 const seedDb = async (close = false) => {
   await clearCollections()
-  await seedCollections()
+  
+  try {
+    await seedCollections()
+  } catch (e) {
+    console.log(e)
+  }
+
   if (close) {
     process.exit(0)
   }

@@ -1,6 +1,10 @@
 const _ = require("underscore")
 
 module.exports = (doc, redHerringDocs) => {
+  if (!doc.isDecomposable) {
+    return []
+  }
+
   const prompt = doc.highlightedDefinition()
 
   const answerRoots = doc.components.filter(c => c.isRoot).map(c => c.value)

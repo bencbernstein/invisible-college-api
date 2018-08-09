@@ -1,10 +1,20 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
+const categories = require("../lib/categories")
+
 var wordSchema = new Schema({
   value: { type: String, required: true },
   isDecomposable: { type: Boolean, required: true, default: false },
   synonyms: { type: [String], default: [] },
+  categories: {
+    type: [
+      {
+        type: String,
+        enum: categories
+      }
+    ]
+  },
   components: {
     type: [
       {
@@ -43,11 +53,11 @@ var wordSchema = new Schema({
   images: { type: [Schema.Types.ObjectId], required: true, default: [] }
 })
 
-wordSchema.methods.simpleDefinition = function() {
+wordSchema.methods.simpleDefinition = function () {
   return this.definition.map(d => d.value).join("")
 }
 
-wordSchema.methods.highlightedDefinition = function() {
+wordSchema.methods.highlightedDefinition = function () {
   return this.definition.map(d => ({ value: d.value, highlight: d.highlight }))
 }
 
