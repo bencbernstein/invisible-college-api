@@ -14,12 +14,14 @@ describe("sentence questions", () => {
   before(async () => await seedDb())
 
   it("makes sentence to part of speech questions for a text", async () => {
-    const questions = await generate(text._id, "SENTENCE_TO_POS")
+    const questions = await generate(text._id, null, "SENTENCE_TO_POS")
     assertCorrectProperties(questions)
   })
 
-  it("makes sentence to truthfulness questions for a text", async () => {
-    const questions = await generate(text._id, "SENTENCE_TO_TRUTH")
+  it.only("makes sentence to truthfulness questions for a text", async () => {
+    const questions = await generate(text._id, null, "SENTENCE_TO_TRUTH")
+    console.log(questions[0])
+    console.log(questions[1])
     assertCorrectProperties(questions)
   })
 

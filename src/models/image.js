@@ -5,7 +5,7 @@ var imageSchema = new Schema({
   caption: String,
   location: String,
   buf: { type: Buffer, required: true },
-  words: { type: [Schema.Types.ObjectId], required: true, default: [] }
+  words: { type: [String], required: true, default: [] }
 })
 
 const Model = mongoose.model("Image", imageSchema)

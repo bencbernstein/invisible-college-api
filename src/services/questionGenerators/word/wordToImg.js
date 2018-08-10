@@ -7,15 +7,18 @@ const toBase64 = doc => "data:image/jpg;base64," + doc.buf.toString("base64")
 module.exports = async (doc, redHerringDocs, reverse) =>
   Promise.all(
     doc.images.map(async id => {
+      console.log("image " + id)
+      console.log(doc.value)
+
       const questions = []
 
-      const doc = await ImageModel.findById(id)
+      const imageDoc = await ImageModel.findById(id)
 
-      if (!doc) {
+      if (!imageDoc) {
         return questions
       }
 
-      const imageBase64 = toBase64(doc)
+      const imageBase64 = toBase64(imageDoc)
 
       if (reverse === true || reverse === undefined) {
         let params = {}

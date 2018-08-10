@@ -71,13 +71,6 @@ module.exports = [{
 }, {
   definition: [{
     highlight: false,
-    value: "an urgent or peremptory request"
-  }],
-  value: "demand",
-  categories: ["microeconomics"]
-}, {
-  definition: [{
-    highlight: false,
     value: "a numerical quantity measured or assigned or computed"
   }],
   value: "value",

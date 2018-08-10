@@ -16,30 +16,34 @@ const TYPES = {
   WORD_TO_IMG: wordToImg
 }
 
-const getRedHerringDocs = async exclude =>
+const getRedHerringDocs = async (exclude, category) =>
   _.flatten(
     await Promise.all([
       WordModel.find({
         _id: { $ne: exclude },
-        isDecomposable: false
+        isDecomposable: false,
+        categories: category
       }).limit(5),
       WordModel.find({
         _id: { $ne: exclude },
-        isDecomposable: true
+        isDecomposable: true,
+        categories: category
       }).limit(5)
     ])
   )
 
 module.exports = async (id, category, TYPE, reverse) => {
   const doc = await WordModel.findById(id)
-  const redHerringDocs = await getRedHerringDocs(id)
+  const redHerringDocs = await getRedHerringDocs(id, category)
 
   let questions
 
   const params = [doc, redHerringDocs, reverse]
 
   const generate = async TYPE =>
-    _.flatten(await TYPES[TYPE](...params)).map(q => _.extend({}, q, { TYPE, categories: category }))
+    _.flatten(await TYPES[TYPE](...params)).map(q =>
+      _.extend({}, q, { TYPE, categories: category })
+    )
 
   if (TYPE) {
     questions = await generate(TYPE)

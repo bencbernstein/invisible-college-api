@@ -1,34 +1,46 @@
 const ChoiceSetModel = require("../../../models/choiceSet")
 const _ = require("underscore")
 
-module.exports = async sentences => {
-  const choiceSets = (await ChoiceSetModel.find({}, { choices: 1 })).map(
-    doc => doc.choices
-  )
+const questions = (sentence, choiceSets) =>
+  sentence.map((word, wordIndex) => {
+    const choiceSet = _.find(choiceSets, s => s.includes(word.value))
 
-  return sentences.map(sentence =>
-    sentence.map((word, wordIdx) => {
-      const idx = _.findIndex(choiceSets, set => set.includes(word.value))
+    if (choiceSet) {
+      let params = {}
 
-      if (idx > -1) {
-        let params = {}
+      const makeWrong = choiceSet.length > 2 && Math.random() > 0.5
+      const redHerring = _.sample(_.without(choiceSet, word.value))
 
-        const coinflip = Math.random() > 0.5
+      params.prompt = sentence.map((word, wordIndex2) => ({
+        value: wordIndex === wordIndex2 && makeWrong ? redHerring : word.value,
+        highlight: wordIndex === wordIndex2
+      }))
 
-        const highlightedWord = coinflip
-          ? word.value
-          : _.sample(_.without(choiceSets[idx], word.value))
+      params.answer = [{ prefill: false, value: makeWrong ? "FALSE" : "TRUE" }]
+      params.redHerrings = [makeWrong ? "TRUE" : "FALSE"]
 
-        params.prompt = sentence.map((word, wordIdx2) => ({
-          value: wordIdx === wordIdx2 ? highlightedWord : word.value,
-          highlight: wordIdx === wordIdx2
+      if (makeWrong) {
+        let params2 = {}
+
+        params2.prompt = params.prompt.map((data, wordIndex2) => ({
+          value:
+            wordIndex === wordIndex2
+              ? "_".repeat(redHerring.length)
+              : data.value,
+          highlight: data.highlight
         }))
+        params2.answer = [{ prefill: false, value: word.value }]
+        params2.redHerrings = _.without(choiceSet, word.value, redHerring)
 
-        params.answer = [{ prefill: false, value: coinflip ? "true" : "false" }]
-        params.redHerrings = [coinflip ? "false" : "true"]
-
-        return params
+        return [params, params2]
       }
-    })
-  )
+
+      return params
+    }
+  })
+
+module.exports = async sentences => {
+  const docs = await ChoiceSetModel.find({}, { choices: 1 })
+  const choiceSets = docs.map(d => d.choices)
+  return sentences.map(s => questions(s, choiceSets))
 }
