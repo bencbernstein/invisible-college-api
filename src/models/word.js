@@ -1,6 +1,7 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
+const ImageModel = require("./image")
 const categories = require("../lib/categories")
 
 var wordSchema = new Schema({
@@ -60,6 +61,14 @@ wordSchema.methods.simpleDefinition = function () {
 wordSchema.methods.highlightedDefinition = function () {
   return this.definition.map(d => ({ value: d.value, highlight: d.highlight }))
 }
+
+wordSchema.pre("save", async function (next) {
+  const images = await ImageModel.find({ words: this.value })
+  if (images.length) {
+    this.images = images.map(i => i._id)
+  }
+  next()
+})
 
 const Model = mongoose.model("Word", wordSchema)
 module.exports = Model

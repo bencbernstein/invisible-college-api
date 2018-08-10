@@ -12,8 +12,9 @@ const generateQuestionsForWord = require("./word/index")
 const generateQuestionsForText = require("./sentence/index")
 
 exports.generate = async category => {
-  const texts = await TextModel.find({ categories: category }, { _id: 1, name: 1 })
-  const words = await WordModel.find({ categories: category }, { _id: 1, value: 1 })
+  const query = category ? { categories: category } : {}
+  const texts = await TextModel.find(query, { _id: 1, name: 1 })
+  const words = await WordModel.find(query, { _id: 1, value: 1 })
 
   let wordCounter = 0
   let textCounter = 0

@@ -2,6 +2,7 @@ const _ = require("underscore")
 
 const wordToDef = (doc, redHerringDocs, reverse) => {
   const questions = []
+  redHerringDocs = redHerringDocs.slice(0, 5)
 
   if (reverse === true || reverse === undefined) {
     let params = {}
