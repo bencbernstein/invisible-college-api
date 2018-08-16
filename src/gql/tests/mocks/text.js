@@ -4,8 +4,6 @@ const ID = mongoose.Types.ObjectId()
 const ID2 = mongoose.Types.ObjectId()
 const ID3 = mongoose.Types.ObjectId()
 
-const realPreFilteredText = require("./data.json")
-
 const text = {
   _id: ID,
   name: "About Zoology",
@@ -242,5 +240,5 @@ const preFilteredText = {
 
 module.exports = {
   mock: text,
-  mocks: [text, preFilteredText, realPreFilteredText]
+  mocks: [text, preFilteredText]
 }

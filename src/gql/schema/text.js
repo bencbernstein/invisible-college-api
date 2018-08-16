@@ -49,6 +49,10 @@ extend type Mutation {
     passageId: ID!
   ): Text  
 
+  removeText (
+    id: ID!
+  ): Text
+
   updatePassage (
     update: String!
   ): Text    
@@ -112,6 +116,9 @@ const textResolvers = {
         },
         { new: true }
       )
+    },
+    async removeText(_, params) {
+      return TextModel.findByIdAndRemove(params.id)
     }
   }
 }
