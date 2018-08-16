@@ -4,6 +4,8 @@ const ID = mongoose.Types.ObjectId()
 const ID2 = mongoose.Types.ObjectId()
 const ID3 = mongoose.Types.ObjectId()
 
+const realPreFilteredText = require("./data.json")
+
 const text = {
   _id: ID,
   name: "About Zoology",
@@ -172,7 +174,73 @@ const text = {
   ]
 }
 
+const preFilteredText = {
+  _id: mongoose.Types.ObjectId(),
+  name: "biped-quadruped-centipede-millipede",
+  source: "multiple",
+  isPreFiltered: true,
+  tokenized: JSON.stringify([
+    {
+      sentence:
+        "Passage 1%%Source: Mueller-Schwarze_D._Chemical_ecology_of_vertebrates__2006 (5114 - 5124)%%Matches: insect, millipede",
+      found: []
+    },
+    {
+      sentence:
+        "The search is on for\n\nprey that might contain other dendrobatid compounds.",
+      found: []
+    },
+    {
+      sentence:
+        "D. auratus from central\n\nPanama were introduced into Hawaii and after only about 30 generations, their\n\narray of alkaloids had changed, presumably because of the change in diet (Daly\n\net al ., 1992 ).",
+      found: []
+    },
+    {
+      sentence: "Frogs of the genus Dendrobates are ant specialists.",
+      found: []
+    },
+    {
+      sentence:
+        "Of the more than 20 struc-\n\ntural classes of lipophilic alkaloids found in the frogs, six occur in myrmicine ants.",
+      found: []
+    },
+    {
+      sentence:
+        "However, many dendrobatid alkaloids such as the batrachotoxins, histri- onicotoxins, and pumiliotoxins, have not yet been found in insects and other\n\nleaf-litter prey such as beetles and millipedes (Daly et al ., 2000 ).",
+      found: []
+    },
+    {
+      sentence:
+        "The snake Lio-\n\nphis epinephelus feeds on Dendrobates and may further bioaccumulate alkaloids.",
+      found: []
+    },
+    {
+      sentence:
+        "The African clawed frog, Xenopus laevis , well known as a laboratory animal, pro- duces mucus in its granular (poison) glands that affects predatory snakes.",
+      found: []
+    },
+    {
+      sentence:
+        "The most common frog-eating snakes in the clawed frog\u2019s habitat are the African water snakes, Lycodonomorphus rufulus , and Lycodonomorphus laevissimus .",
+      found: []
+    },
+    {
+      sentence:
+        "Experi- ments with snakes from the Cape Town area in South Africa demonstrated the potent effect of the frog\u2019s mucus.",
+      found: []
+    },
+    {
+      sentence: "%END%",
+      found: []
+    },
+    {
+      sentence: "FOO BAR",
+      found: []
+    }
+  ])
+}
+
 module.exports = {
   mock: text,
-  mocks: [text]
+  mocks: [text, preFilteredText, realPreFilteredText]
 }
