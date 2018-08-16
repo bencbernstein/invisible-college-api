@@ -7,9 +7,6 @@ const toBase64 = doc => "data:image/jpg;base64," + doc.buf.toString("base64")
 module.exports = async (doc, redHerringDocs, reverse) =>
   Promise.all(
     doc.images.map(async id => {
-      console.log("image " + id)
-      console.log(doc.value)
-
       const questions = []
 
       const imageDoc = await ImageModel.findById(id)
@@ -24,9 +21,10 @@ module.exports = async (doc, redHerringDocs, reverse) =>
         let params = {}
         params.prompt = [{ value: doc.value, highlight: false }]
         params.answer = [{ value: imageBase64, prefill: false }]
-        params.redHerrings = _
-          .sample(await ImageModel.find({ _id: { $ne: id } }), 5)
-          .map(toBase64)
+        params.redHerrings = _.sample(
+          await ImageModel.find({ _id: { $ne: id } }),
+          5
+        ).map(toBase64)
         questions.push(params)
       }
 

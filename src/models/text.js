@@ -7,6 +7,7 @@ var textSchema = new Schema({
   name: { type: String, required: true },
   source: { type: String, required: true },
   tokenized: { type: String, required: true },
+  isPreFiltered: { type: Boolean, required: true, default: false },
   categories: {
     type: [
       {

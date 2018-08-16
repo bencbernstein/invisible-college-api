@@ -27,6 +27,7 @@ type Text {
   source: String!
   tokenized: String!
   passages: [Passage]
+  isPreFiltered: Boolean
 }
 
 extend type Query {
