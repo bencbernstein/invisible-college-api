@@ -19,6 +19,7 @@ type Passage {
   value: String
   found: [String]
   tagged: [Tagged]!
+  isEnriched: Boolean!
 }
 
 type Text {
@@ -28,6 +29,8 @@ type Text {
   tokenized: String!
   passages: [Passage]
   isPreFiltered: Boolean
+  passagesCount: Int
+  unenrichedPassagesCount: Int
 }
 
 extend type Query {
@@ -62,9 +65,10 @@ extend type Mutation {
 const textResolvers = {
   Query: {
     texts() {
-      return TextModel.find({}, { name: 1, source: 1 }).catch(
-        err => new Error(err)
-      )
+      return TextModel.find(
+        {},
+        { name: 1, source: 1, passagesCount: 1, unenrichedPassagesCount: 1 }
+      ).catch(err => new Error(err))
     },
 
     text(_, params) {
@@ -105,17 +109,23 @@ const textResolvers = {
       )
     },
     async updatePassage(_, params) {
-      const decoded = JSON.parse(decodeURIComponent(params.update))
-      return TextModel.findOneAndUpdate(
-        { "passages._id": decoded.id },
-        {
-          $set: {
-            "passages.$.value": decoded.value,
-            "passages.$.tagged": decoded.tagged
-          }
-        },
-        { new: true }
-      )
+      try {
+        const decoded = JSON.parse(decodeURIComponent(params.update))
+        const text = await TextModel.findOne({ "passages._id": decoded.id })
+        const passages = text.passages
+        const idx = _u.findIndex(passages, p => p._id.equals(decoded.id))
+        passages[idx].value = decoded.value
+        passages[idx].tagged = decoded.tagged
+        passages[idx].isEnriched = true
+        text.passagesCount = passages.length
+        text.unenrichedPassagesCount = passages.filter(
+          p => !p.isEnriched
+        ).length
+        text.save()
+        return text
+      } catch (e) {
+        console.log(e)
+      }
     },
     async removeText(_, params) {
       return TextModel.findByIdAndRemove(params.id)

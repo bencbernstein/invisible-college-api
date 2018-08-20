@@ -23,6 +23,7 @@ var textSchema = new Schema({
         endIdx: { type: Number, required: true },
         value: { type: String }, // TODO: - add required
         found: { type: [String], required: true, default: [] },
+        isEnriched: { type: Boolean, required: true, default: false },
         tagged: {
           type: [
             {
@@ -37,7 +38,16 @@ var textSchema = new Schema({
       }
     ],
     default: []
-  }
+  },
+  passagesCount: { type: Number, required: true, min: 0, default: 0 },
+  unenrichedPassagesCount: { type: Number, required: true, min: 0, default: 0 }
+})
+
+textSchema.pre("save", function(next) {
+  console.log("trigger")
+  this.passagesCount = this.passages.length
+  this.unenrichedPassagesCount = this.passages.filter(p => !p.isEnriched).length
+  next()
 })
 
 const Model = mongoose.model("Text", textSchema)

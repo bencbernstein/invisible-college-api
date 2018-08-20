@@ -8,11 +8,12 @@ const { seedDb } = require("../../test/helpers")
 const Text = require("../../models/text")
 
 let text = require("./mocks/text").mock
+let mocks = require("./mocks/text").mocks
 
 describe("texts", () => {
   beforeEach(async () => await seedDb())
 
-  it("return 1 text with 1 text in the db", async () => {
+  it("return texts with from the db", async () => {
     const query = `
       query {
         texts {
@@ -27,7 +28,7 @@ describe("texts", () => {
     const result = await graphql(schema, query, rootValue, context)
     const { texts } = result.data
 
-    chai.assert.equal(texts.length, 1)
+    chai.assert.equal(texts.length, mocks.length)
   })
 
   it("finds a text by its id", async () => {
@@ -110,9 +111,6 @@ describe("texts", () => {
         }
       ]
     }
-    text.passages[0].value = text.passages[0].tagged[0].value = "The"
-    text.passages[0].tagged[0].tag = "NN"
-    text.passages[0].tagged[0].isFocusWord = true
 
     const encoded = encodeURIComponent(JSON.stringify(newPassage))
 
@@ -120,6 +118,8 @@ describe("texts", () => {
       mutation {
         updatePassage (update: "${encoded}") {
           id
+          passagesCount
+          unenrichedPassagesCount
           passages {
             value
             tagged {
@@ -151,5 +151,7 @@ describe("texts", () => {
       updated.passages[0].tagged[0].isFocusWord,
       newPassage.tagged[0].isFocusWord
     )
+    chai.assert.equal(updated.passagesCount, updated.passages.length)
+    chai.assert.equal(updated.unenrichedPassagesCount, updated.passages.length)
   })
 })
