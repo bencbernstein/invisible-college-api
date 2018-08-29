@@ -1,46 +1,65 @@
 const ChoiceSetModel = require("../../../models/choiceSet")
+const WordModel = require("../../../models/word")
 const _ = require("underscore")
 
-const questions = (sentence, choiceSets) =>
-  sentence.map((word, wordIndex) => {
-    const choiceSet = _.find(choiceSets, s => s.includes(word.value))
+const coinflip = () => Math.random() > 0
 
-    if (choiceSet) {
-      let params = {}
+const question = async (passage, word, idx) => {
+  const { wordId, choiceSetId, isFocusWord, value } = word
 
-      const makeWrong = choiceSet.length > 2 && Math.random() > 0.5
-      const redHerring = _.sample(_.without(choiceSet, word.value))
+  const MAKE_WRONG = coinflip()
+  let params = {}
+  let followUpParams = {}
+  let herring, herrings
 
-      params.prompt = sentence.map((word, wordIndex2) => ({
-        value: wordIndex === wordIndex2 && makeWrong ? redHerring : word.value,
-        highlight: wordIndex === wordIndex2
-      }))
+  if (wordId && isFocusWord) {
+    const wordDoc = await WordModel.findById(wordId)
+    const herringDocs = await WordModel.redHerring(wordDoc)
+    herrings = herringDocs.map(h => h.value)
+  } else if (choiceSetId && isFocusWord) {
+    const choiceSet = await ChoiceSetModel.findById(choiceSetId)
+    herrings = _.without(choiceSet.choices, value)
+  } else {
+    return
+  }
 
-      params.answer = [{ prefill: false, value: makeWrong ? "FALSE" : "TRUE" }]
-      params.redHerrings = [makeWrong ? "TRUE" : "FALSE"]
+  herring = _.sample(herrings)
 
-      if (makeWrong) {
-        let params2 = {}
+  params.prompt = passage.map((word, idx2) => ({
+    value: idx === idx2 && MAKE_WRONG ? herring : word.value,
+    highlight: idx === idx2
+  }))
 
-        params2.prompt = params.prompt.map((data, wordIndex2) => ({
-          value:
-            wordIndex === wordIndex2
-              ? "_".repeat(redHerring.length)
-              : data.value,
-          highlight: data.highlight
-        }))
-        params2.answer = [{ prefill: false, value: word.value }]
-        params2.redHerrings = _.without(choiceSet, word.value, redHerring)
+  params.answer = [{ prefill: false, value: MAKE_WRONG ? "FALSE" : "TRUE" }]
+  params.redHerrings = [MAKE_WRONG ? "TRUE" : "FALSE"]
 
-        return [params, params2]
-      }
+  if (!MAKE_WRONG) {
+    return params
+  }
 
-      return params
-    }
-  })
+  followUpParams.answer = params.prompt.map(p => ({
+    value: p.value,
+    prefill: !p.highlight
+  }))
 
-module.exports = async sentences => {
-  const docs = await ChoiceSetModel.find({}, { choices: 1 })
-  const choiceSets = docs.map(d => d.choices)
-  return sentences.map(s => questions(s, choiceSets))
+  followUpParams.redHerrings = herrings
+
+  return [params, followUpParams]
+}
+
+const questions = async passage => {
+  const flattened = _.flatten(passage.tagged)
+  const promises = flattened.map((word, idx) => question(flattened, word, idx))
+  return Promise.all(promises)
+}
+
+module.exports = doc => {
+  const promises = _.flatten(
+    doc.passages
+      .map(passage => _.flatten(passage.tagged))
+      .map(flattened =>
+        flattened.map((word, idx) => question(flattened, word, idx))
+      )
+  )
+  return Promise.all(promises)
 }

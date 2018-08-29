@@ -19,8 +19,7 @@ const questionSchema = new Schema({
         value: { type: String, required: true },
         highlight: { type: Boolean, required: true }
       }
-    ],
-    required: true
+    ]
   },
   answer: {
     type: [
@@ -46,8 +45,7 @@ const questionSchema = new Schema({
           value: { type: String, required: true }
         }
       }
-    },
-    required: true
+    }
   }
 })
 

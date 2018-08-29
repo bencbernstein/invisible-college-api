@@ -1,6 +1,6 @@
 const _ = require("underscore")
 
-const posTranslation = {
+const PART_OF_SPEECH = {
   PRP: "personal pronoun",
   VBD: "verb, past tense",
   JJ: "adjective",
@@ -19,28 +19,39 @@ const posTranslation = {
   MD: "modal"
 }
 
-module.exports = sentences =>
-  sentences.map(sentence => {
-    const focusWordIndices = sentence
-      .map((word, idx) => (word.isFocusWord ? idx : undefined))
-      .filter(e => e !== undefined)
+const question = passage => {
+  let questions = []
 
-    return focusWordIndices.map(focusWordidx => {
-      let params = {}
+  for (let sentence of passage.tagged) {
+    const focusWordIndices = _.findIndex(sentence, word => word.isFocusWord)
 
-      params.prompt = sentence.map((word, idx) => ({
-        value: word.value,
-        highlight: idx === focusWordidx
-      }))
+    const indices = sentence
+      .map((word, idx) => word.isFocusWord && idx)
+      .filter(idx => idx > -1)
 
-      const answer = sentence[focusWordidx].tag
-      params.answer = [{ value: posTranslation[answer], prefill: false }]
+    questions = questions.concat(
+      indices.map(idx => {
+        let params = {}
 
-      params.redHerrings = _.sample(
-        _.without(_.values(posTranslation), posTranslation[answer]),
-        5
-      )
+        params.prompt = sentence.map((word, idx2) => ({
+          value: word.value,
+          highlight: idx === idx2
+        }))
 
-      return params
-    })
-  })
+        const answer = sentence[idx].tag
+        params.answer = [{ value: PART_OF_SPEECH[answer], prefill: false }]
+
+        params.redHerrings = _.sample(
+          _.without(_.values(PART_OF_SPEECH), PART_OF_SPEECH[answer]),
+          5
+        )
+
+        return params
+      })
+    )
+  }
+
+  return questions
+}
+
+module.exports = doc => doc.passages.map(question)

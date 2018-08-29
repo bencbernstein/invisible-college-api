@@ -1,3 +1,4 @@
+const _u = require("underscore")
 const { graphql } = require("graphql")
 const chai = require("chai")
 const should = chai.should()
@@ -54,7 +55,9 @@ describe("texts", () => {
 
     const query = `
       mutation {
-        addPassages (id: "${text._id}", ranges: ${JSON.stringify(ranges)}) {
+        addPassages (id: "${text._id}", ranges: ${JSON.stringify(
+      ranges
+    )}) {        
           id
           name
           passages {
@@ -73,6 +76,37 @@ describe("texts", () => {
     chai.assert.equal(
       updated.passages.length,
       text.passages.length + ranges.length
+    )
+  })
+
+  it("parses source for passages in a text with multiple", async () => {
+    const ranges = [[5, 7]]
+
+    const multipleSourcesMock = _u.last(mocks)
+
+    const query = `
+      mutation {
+        addPassages (id: "${multipleSourcesMock._id}", ranges: ${JSON.stringify(
+      ranges
+    )}) {
+              id
+          name
+          passages {
+            id
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const updated = result.data.addPassages
+
+    chai.assert.equal(
+      updated.passages.length,
+      multipleSourcesMock.passages.length + ranges.length
     )
   })
 
@@ -104,11 +138,13 @@ describe("texts", () => {
       id: text.passages[0]._id,
       value: "something different",
       tagged: [
-        {
-          value: "The",
-          tag: "NN",
-          isFocusWord: true
-        }
+        [
+          {
+            value: "The",
+            tag: "NN",
+            isFocusWord: true
+          }
+        ]
       ]
     }
 
@@ -123,9 +159,9 @@ describe("texts", () => {
           passages {
             value
             tagged {
+              value
               tag
               isFocusWord
-              value
             }
           }
         }
@@ -140,18 +176,17 @@ describe("texts", () => {
 
     chai.assert.equal(updated.passages[0].value, newPassage.value)
     chai.assert.equal(
-      updated.passages[0].tagged[0].value,
-      newPassage.tagged[0].value
+      updated.passages[0].tagged[0][0].value,
+      newPassage.tagged[0][0].value
     )
     chai.assert.equal(
-      updated.passages[0].tagged[0].tag,
-      newPassage.tagged[0].tag
+      updated.passages[0].tagged[0][0].tag,
+      newPassage.tagged[0][0].tag
     )
     chai.assert.equal(
-      updated.passages[0].tagged[0].isFocusWord,
-      newPassage.tagged[0].isFocusWord
+      updated.passages[0].tagged[0][0].isFocusWord,
+      newPassage.tagged[0][0].isFocusWord
     )
     chai.assert.equal(updated.passagesCount, updated.passages.length)
-    chai.assert.equal(updated.unenrichedPassagesCount, updated.passages.length)
   })
 })

@@ -12,7 +12,13 @@ const ImageController = require("./controllers/image")
 const mongoose = require("./lib/db")
 const db = mongoose()
 
-const server = new ApolloServer({ schema })
+const playground = {
+  settings: {
+    "editor.cursorShape": "line"
+  }
+}
+
+const server = new ApolloServer({ schema, playground })
 
 const app = express()
 

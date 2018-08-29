@@ -3,44 +3,48 @@ const _ = require("underscore")
 require("../../lib/db")()
 
 const QuestionModel = require("../../models/question")
+const QuestionSequenceModel = require("../../models/questionSequence")
 const TextModel = require("../../models/text")
 const WordModel = require("../../models/word")
 
-const ImageModel = require("../../models/image")
-
 const generateQuestionsForWord = require("./word/index")
-const generateQuestionsForText = require("./sentence/index")
+
+const {
+  generateQuestionsForText,
+  generateAdditionalQuestionsForText
+} = require("./sentence/index")
 
 exports.generate = async category => {
+  await QuestionModel.remove()
+  await QuestionSequenceModel.remove()
+
   const query = category ? { categories: category } : {}
+
   const texts = await TextModel.find(query, { _id: 1, name: 1 })
   const words = await WordModel.find(query, { _id: 1, value: 1 })
 
-  let wordCounter = 0
-  let textCounter = 0
+  const promises = texts.map(
+    async text => await generateQuestionsForText(text._id, category)
+  )
 
-  for (const text of texts) {
-    textCounter += 1
-    console.log(
-      `${textCounter}/${texts.length} Creating questions for text: ${text.name}`
-    )
+  const textQs = _.flatten(await Promise.all(promises))
+  // const additionalTextQs = generateAdditionalQuestionsForText(textQs)
 
-    const questionsForText = _.compact(
-      _.flatten(await generateQuestionsForText(text._id, category))
-    )
+  const questions = await QuestionModel.create(textQs)
 
-    try {
-      await QuestionModel.create(questionsForText)
-    } catch (e) {
-      console.log(e.message)
-    }
-  }
+  await QuestionSequenceModel.create({
+    name: "test sequence",
+    questions: questions.map(q => q._id)
+  })
 
-  for (const word of words) {
+  console.log("success")
+  process.exit(0)
+
+  /*for (const word of words) {
     wordCounter += 1
     console.log(
       `${wordCounter}/${words.length} Creating questions for word: ${
-      word.value
+        word.value
       }`
     )
 
@@ -55,5 +59,5 @@ exports.generate = async category => {
     }
   }
 
-  return
+  return*/
 }
