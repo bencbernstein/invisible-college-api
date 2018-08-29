@@ -1,3 +1,4 @@
+const _u = require("underscore")
 const { graphql } = require("graphql")
 const chai = require("chai")
 const should = chai.should()
@@ -8,11 +9,12 @@ const { seedDb } = require("../../test/helpers")
 const Text = require("../../models/text")
 
 let text = require("./mocks/text").mock
+let mocks = require("./mocks/text").mocks
 
 describe("texts", () => {
   beforeEach(async () => await seedDb())
 
-  it("return 1 text with 1 text in the db", async () => {
+  it("return texts with from the db", async () => {
     const query = `
       query {
         texts {
@@ -27,7 +29,7 @@ describe("texts", () => {
     const result = await graphql(schema, query, rootValue, context)
     const { texts } = result.data
 
-    chai.assert.equal(texts.length, 1)
+    chai.assert.equal(texts.length, mocks.length)
   })
 
   it("finds a text by its id", async () => {
@@ -53,7 +55,9 @@ describe("texts", () => {
 
     const query = `
       mutation {
-        addPassages (id: "${text._id}", ranges: ${JSON.stringify(ranges)}) {
+        addPassages (id: "${text._id}", ranges: ${JSON.stringify(
+      ranges
+    )}) {        
           id
           name
           passages {
@@ -72,6 +76,37 @@ describe("texts", () => {
     chai.assert.equal(
       updated.passages.length,
       text.passages.length + ranges.length
+    )
+  })
+
+  it("parses source for passages in a text with multiple", async () => {
+    const ranges = [[5, 7]]
+
+    const multipleSourcesMock = _u.last(mocks)
+
+    const query = `
+      mutation {
+        addPassages (id: "${multipleSourcesMock._id}", ranges: ${JSON.stringify(
+      ranges
+    )}) {
+              id
+          name
+          passages {
+            id
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const updated = result.data.addPassages
+
+    chai.assert.equal(
+      updated.passages.length,
+      multipleSourcesMock.passages.length + ranges.length
     )
   })
 
@@ -103,16 +138,15 @@ describe("texts", () => {
       id: text.passages[0]._id,
       value: "something different",
       tagged: [
-        {
-          value: "The",
-          tag: "NN",
-          isFocusWord: true
-        }
+        [
+          {
+            value: "The",
+            tag: "NN",
+            isFocusWord: true
+          }
+        ]
       ]
     }
-    text.passages[0].value = text.passages[0].tagged[0].value = "The"
-    text.passages[0].tagged[0].tag = "NN"
-    text.passages[0].tagged[0].isFocusWord = true
 
     const encoded = encodeURIComponent(JSON.stringify(newPassage))
 
@@ -120,12 +154,14 @@ describe("texts", () => {
       mutation {
         updatePassage (update: "${encoded}") {
           id
+          passagesCount
+          unenrichedPassagesCount
           passages {
             value
             tagged {
+              value
               tag
               isFocusWord
-              value
             }
           }
         }
@@ -140,16 +176,17 @@ describe("texts", () => {
 
     chai.assert.equal(updated.passages[0].value, newPassage.value)
     chai.assert.equal(
-      updated.passages[0].tagged[0].value,
-      newPassage.tagged[0].value
+      updated.passages[0].tagged[0][0].value,
+      newPassage.tagged[0][0].value
     )
     chai.assert.equal(
-      updated.passages[0].tagged[0].tag,
-      newPassage.tagged[0].tag
+      updated.passages[0].tagged[0][0].tag,
+      newPassage.tagged[0][0].tag
     )
     chai.assert.equal(
-      updated.passages[0].tagged[0].isFocusWord,
-      newPassage.tagged[0].isFocusWord
+      updated.passages[0].tagged[0][0].isFocusWord,
+      newPassage.tagged[0][0].isFocusWord
     )
+    chai.assert.equal(updated.passagesCount, updated.passages.length)
   })
 })

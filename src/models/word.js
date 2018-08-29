@@ -1,3 +1,4 @@
+const _ = require("underscore")
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
@@ -8,6 +9,7 @@ var wordSchema = new Schema({
   value: { type: String, required: true },
   isDecomposable: { type: Boolean, required: true, default: false },
   synonyms: { type: [String], default: [] },
+  otherForms: { type: [String], default: [] },
   categories: {
     type: [
       {
@@ -54,15 +56,26 @@ var wordSchema = new Schema({
   images: { type: [Schema.Types.ObjectId], required: true, default: [] }
 })
 
-wordSchema.methods.simpleDefinition = function () {
+wordSchema.methods.simpleDefinition = function() {
   return this.definition.map(d => d.value).join("")
 }
 
-wordSchema.methods.highlightedDefinition = function () {
+wordSchema.methods.highlightedDefinition = function() {
   return this.definition.map(d => ({ value: d.value, highlight: d.highlight }))
 }
 
-wordSchema.pre("save", async function (next) {
+wordSchema.statics.redHerring = async function(doc) {
+  if (doc.isDecomposable) {
+    const rootValue = _.find(doc.components, c => c.isRoot).value
+
+    return await this.find({
+      value: { $ne: doc.value },
+      components: { $elemMatch: { value: rootValue, isRoot: true } }
+    })
+  }
+}
+
+wordSchema.pre("save", async function(next) {
   const images = await ImageModel.find({ words: this.value })
   if (images.length) {
     this.images = images.map(i => i._id)

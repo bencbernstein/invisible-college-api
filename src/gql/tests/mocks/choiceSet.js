@@ -1,7 +1,8 @@
 const mongoose = require("mongoose")
 
 const ID = mongoose.Types.ObjectId()
-const ID2 = mongoose.Types.ObjectId()
+
+const PHYSICAL_STATES_ID = mongoose.Types.ObjectId()
 
 const choiceSet = {
   _id: ID,
@@ -11,13 +12,14 @@ const choiceSet = {
 }
 
 const choiceSet2 = {
-  _id: ID2,
+  _id: PHYSICAL_STATES_ID,
   name: "states",
   category: "physics",
-  choices: ["liquid", "gas", "solid"]
+  choices: ["liquid", "gas", "solid", "nebula"]
 }
 
 module.exports = {
   mock: choiceSet,
-  mocks: [choiceSet, choiceSet2]
+  mocks: [choiceSet, choiceSet2],
+  PHYSICAL_STATES_ID: PHYSICAL_STATES_ID
 }

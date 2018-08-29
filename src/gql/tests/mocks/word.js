@@ -3,10 +3,13 @@ const mongoose = require("mongoose")
 const ID = mongoose.Types.ObjectId()
 const ID2 = mongoose.Types.ObjectId()
 
+const CARDIOGRAM_ID = mongoose.Types.ObjectId()
+
 const word = {
   _id: ID,
   value: "nebula",
   isDecomposable: true,
+  otherForms: ["nebulas"],
   synonyms: ["galaxy"],
   components: [
     {
@@ -148,6 +151,30 @@ const words = [
   },
   {
     _id: mongoose.Types.ObjectId(),
+    value: "cardio",
+    isDecomposable: true,
+    synonyms: [],
+    components: [
+      {
+        isRoot: true,
+        value: "cardi"
+      },
+      {
+        isRoot: false,
+        value: "o"
+      }
+    ],
+    definition: [
+      {
+        value: "exercise",
+        highlight: false
+      }
+    ],
+    obscurity: 5,
+    images: []
+  },
+  {
+    _id: CARDIOGRAM_ID,
     value: "cardiogram",
     isDecomposable: true,
     synonyms: [],
@@ -237,5 +264,6 @@ const words = [
 
 module.exports = {
   mock: word,
-  mocks: words.concat(word)
+  mocks: words.concat(word),
+  CARDIOGRAM_ID: CARDIOGRAM_ID
 }

@@ -17,8 +17,8 @@ extend type Query {
 const keywordResolvers = {
   Query: {
     async keywords() {
-      let words = await WordModel.find({}, { value: 1, _id: 0 })
-      words = words.map(w => w.value)
+      let words = await WordModel.find({}, { value: 1, _id: 0, otherForms: 1 })
+      words = _.flatten(words.map(w => w.otherForms.concat(w.value)))
       let choices = await ChoiceSetModel.find({}, { choices: 1, _id: 0 })
       choices = _.uniq(_.flatten(choices.map(c => c.choices)))
       return { words, choices }
