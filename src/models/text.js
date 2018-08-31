@@ -56,6 +56,7 @@ var textSchema = new Schema(
                   isFocusWord: Boolean,
                   isPunctuation: Boolean,
                   isConnector: Boolean,
+                  isUnfocused: Boolean, // ie. don't make questions using this word
                   wordId: Schema.Types.ObjectId,
                   choiceSetId: Schema.Types.ObjectId,
                   entity: {

@@ -4,24 +4,39 @@ const ChoiceSetModel = require("../../models/choiceSet")
 const WordModel = require("../../models/word")
 
 const keywordTypeDefs = `
-type Keywords {
-  words: [String]!
-  choices: [String]!
-}
-
 extend type Query {
-  keywords: Keywords
+  keywords: String
 }
 `
 
 const keywordResolvers = {
   Query: {
     async keywords() {
-      let words = await WordModel.find({}, { value: 1, _id: 0, otherForms: 1 })
-      words = _.flatten(words.map(w => w.otherForms.concat(w.value)))
-      let choices = await ChoiceSetModel.find({}, { choices: 1, _id: 0 })
-      choices = _.uniq(_.flatten(choices.map(c => c.choices)))
-      return { words, choices }
+      const keywords = {
+        choices: {},
+        words: {}
+      }
+
+      const words = await WordModel.find(
+        {},
+        { value: 1, _id: 1, otherForms: 1 }
+      )
+
+      words.forEach(wordDoc => {
+        wordDoc.otherForms
+          .concat(wordDoc.value)
+          .forEach(word => (keywords.words[word] = wordDoc._id))
+      })
+
+      const choiceSets = await ChoiceSetModel.find({}, { choices: 1, _id: 1 })
+
+      choiceSets.forEach(choiceSet => {
+        choiceSet.choices.forEach(
+          choice => (keywords.choices[choice] = choiceSet._id)
+        )
+      })
+
+      return JSON.stringify(keywords)
     }
   }
 }
