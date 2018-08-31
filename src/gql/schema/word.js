@@ -34,6 +34,7 @@ type Word {
   definition: [Definition]!
   obscurity: Int
   images: [String]
+  otherForms: [String]
   tags: [Tag]
   unverified: Unverified
 }

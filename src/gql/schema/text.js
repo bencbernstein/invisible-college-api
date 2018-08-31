@@ -17,6 +17,7 @@ type Tagged {
   isFocusWord: Boolean
   isPunctuation: Boolean
   isConnector: Boolean
+  isUnfocused: Boolean
   wordId: String
   choiceSetId: String
   entity: String
