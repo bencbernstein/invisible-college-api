@@ -60,7 +60,21 @@ const text2 = {
   passagesCount: 0,
   unenrichedPassagesCount: 0,
   characterCount: 200,
-  passages: []
+  passages: [
+    {
+      _id: mongoose.Types.ObjectId(),
+      startIdx: 5,
+      endIdx: 8,
+      value: "I luh you",
+      tagged: [
+        [
+          { value: "I", tag: "NN" },
+          { value: "luh", tag: "VB" },
+          { value: "you", tag: "DT" }
+        ]
+      ]
+    }
+  ]
 }
 
 const preFilteredText = {
