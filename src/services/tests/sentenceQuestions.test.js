@@ -67,9 +67,8 @@ describe("sentence questions", () => {
     assertCorrectProperties(questions)
   })
 
-  it.only("makes all text questions", async () => {
+  it("makes all text questions", async () => {
     const questions = await generateQuestionsForText(text._id)
-    console.log(questions)
     assertCorrectProperties(questions)
   })
 })

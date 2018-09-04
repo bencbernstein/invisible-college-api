@@ -142,10 +142,7 @@ describe("words", () => {
   it("gets all the keywords", async function() {
     const query = `
       query {
-        keywords {
-          words
-          choices
-        }
+        keywords
       }
     `
 
@@ -153,9 +150,9 @@ describe("words", () => {
     const context = {}
 
     const result = await graphql(schema, query, rootValue, context)
-    const { keywords } = result.data
+    const { words, choices } = JSON.parse(result.data.keywords)
 
-    chai.assert.isNotEmpty(keywords.words)
-    chai.assert.isNotEmpty(keywords.choices)
+    chai.assert.isNotEmpty(words)
+    chai.assert.isNotEmpty(choices)
   })
 })

@@ -16,7 +16,7 @@ chai.use(chaiHttp)
 describe("images", () => {
   beforeEach(async () => await seedDb())
 
-  it("returns 1 image with 1 image in the db", done => {
+  it("returns images with images in the db", done => {
     const url = "/image" + "?action=GET"
 
     chai
@@ -24,7 +24,7 @@ describe("images", () => {
       .get(url)
       .end((err, res) => {
         res.should.have.status(200)
-        res.body.should.be.a("array").of.length(1)
+        res.body.should.be.a("array").of.length(6)
         done()
       })
   })

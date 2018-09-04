@@ -35,6 +35,7 @@ type Passage {
   startIdx: Int!
   endIdx: Int!
   value: String
+  sequence: String
   tagged: [[Tagged]]!
   isEnriched: Boolean
   metadata: Metadata
