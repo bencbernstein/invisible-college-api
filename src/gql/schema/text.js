@@ -12,10 +12,11 @@ const CONNECTORS = _u.flatten(
 const textTypeDefs = `
 type Tagged {
   id: ID!
-  value: String!
+  value: String
   tag: String
   isFocusWord: Boolean
   isPunctuation: Boolean
+  isSentenceConnector: Boolean
   isConnector: Boolean
   isUnfocused: Boolean
   wordId: String
@@ -36,7 +37,7 @@ type Passage {
   endIdx: Int!
   value: String
   sequence: String
-  tagged: [[Tagged]]!
+  tagged: [Tagged]
   isEnriched: Boolean
   metadata: Metadata
 }
@@ -177,7 +178,11 @@ const textResolvers = {
         obj.endIdx = range[1]
         const sentences = tokenized.slice(obj.startIdx, obj.endIdx)
         obj.value = sentences.join(" ")
-        obj.tagged = sentences.map(s => tag(s, words, choiceSets))
+        // TODO: - check
+        obj.tagged = sentences
+          .map(s => tag(s, words, choiceSets))
+          .reduce((a, v) => [...a, v, { isSentenceConnector: true }], [])
+          .slice(0, -1)
         if (isMultipleSources) {
           obj.metadata = parseTextMetadata(tokenized, obj.startIdx)
         }
@@ -204,22 +209,41 @@ const textResolvers = {
     async updatePassage(_, params) {
       try {
         const decoded = JSON.parse(decodeURIComponent(params.update))
-        const text = await TextModel.findOne({ "passages._id": decoded.id })
-        const passages = text.passages
-        const idx = _u.findIndex(passages, p => p._id.equals(decoded.id))
+        const { tagged, id, value } = decoded
+        const text = await TextModel.findOne({ "passages._id": id })
 
-        text.passages[idx].value = decoded.value
-        text.passages[idx].tagged = []
-        decoded.tagged.forEach(d => text.passages[idx].tagged.push(d))
-        text.passages[idx].isEnriched = true
-        text.passagesCount = passages.length
-        text.unenrichedPassagesCount = passages.filter(
+        const idx = _u.findIndex(text.passages, p => p._id.equals(id))
+
+        const passage = _u.extend({}, text.passages[idx], {
+          value,
+          tagged,
+          isEnriched: true
+        })
+
+        console.log(passage)
+
+        text.passages.splice(idx, 1, passage)
+
+        text.passagesCount = text.passages.length
+        text.unenrichedPassagesCount = text.passages.filter(
           p => !p.isEnriched
         ).length
+
+        // console.log(tagged)
+        // console.log("\n")
+        // console.log(tagged[0])
+        // console.log("\n")
+        // console.log(text.passages[idx].tagged[0])
+        // console.log("\n")
+        // console.log(tagged[1])
+        // console.log("\n")
+        // console.log(text.passages[idx].tagged[1])
+        // console.log("\n")
+
         await text.save()
         return text
-      } catch (e) {
-        console.log(e)
+      } catch (error) {
+        console.log(error.message.slice(0, 1500))
       }
     },
     async removeText(_, params) {

@@ -23,7 +23,6 @@ var textSchema = new Schema(
     isPreFiltered: { type: Boolean, required: true, default: false },
     date: Date,
     author: String,
-    characterCount: { type: Number, min: 100 },
     categories: {
       type: [
         {
@@ -35,36 +34,28 @@ var textSchema = new Schema(
     passages: {
       type: [
         {
-          metadata: {
-            type: {
-              date: Date,
-              author: String,
-              name: { type: String, required: true },
-              source: { type: String, required: true }
-            }
-          },
+          source: { type: String, required: true },
           startIdx: { type: Number, required: true, min: 0 },
           endIdx: { type: Number, required: true },
           value: { type: String, required: true },
           isEnriched: Boolean,
           tagged: {
             type: [
-              [
-                {
-                  value: { type: String, required: true },
-                  tag: String,
-                  isFocusWord: Boolean,
-                  isPunctuation: Boolean,
-                  isConnector: Boolean,
-                  isUnfocused: Boolean, // ie. don't make questions using this word
-                  wordId: Schema.Types.ObjectId,
-                  choiceSetId: Schema.Types.ObjectId,
-                  entity: {
-                    type: String,
-                    enum: ENTITIES
-                  }
+              {
+                isSentenceConnector: Boolean,
+                value: String,
+                tag: String,
+                isFocusWord: Boolean,
+                isPunctuation: Boolean,
+                isConnector: Boolean,
+                isUnfocused: Boolean, // ie. don't make questions using this word
+                wordId: Schema.Types.ObjectId,
+                choiceSetId: Schema.Types.ObjectId,
+                entity: {
+                  type: String,
+                  enum: ENTITIES
                 }
-              ]
+              }
             ],
             required: true
           }

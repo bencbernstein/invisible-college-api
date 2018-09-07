@@ -64,15 +64,41 @@ wordSchema.methods.highlightedDefinition = function() {
   return this.definition.map(d => ({ value: d.value, highlight: d.highlight }))
 }
 
+wordSchema.methods.unHighlightedDefinition = function() {
+  return this.definition.map(d => ({ value: d.value, highlight: false }))
+}
+
+wordSchema.methods.rootIndices = function() {
+  return this.components.map((c, i) => (c.isRoot ? i : -1)).filter(i => i > -1)
+}
+
+wordSchema.methods.hasMultipleRoots = function() {
+  return this.rootIndices().length > 1
+}
+
+wordSchema.methods.rootValues = function() {
+  return this.isDecomposable
+    ? this.components.filter(c => c.isRoot).map(c => c.value)
+    : []
+}
+
 wordSchema.statics.redHerring = async function(doc) {
+  const basicQuery = {
+    value: { $ne: doc.value }
+  }
+
   if (doc.isDecomposable) {
     const rootValue = _.find(doc.components, c => c.isRoot).value
-
-    return await this.find({
-      value: { $ne: doc.value },
+    const rootQuery = _.extend({}, basicQuery, {
       components: { $elemMatch: { value: rootValue, isRoot: true } }
     })
+    const redHerrings = await this.find(rootQuery).limit(5)
+    if (redHerrings.length) {
+      return redHerrings
+    }
   }
+
+  return this.find(basicQuery).limit(5)
 }
 
 wordSchema.pre("save", async function(next) {

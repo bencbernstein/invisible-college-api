@@ -16,16 +16,18 @@ const questionSchema = new Schema({
   prompt: {
     type: [
       {
-        value: { type: String, required: true },
-        highlight: { type: Boolean, required: true }
+        value: String,
+        isSentenceConnector: Boolean,
+        highlight: Boolean
       }
     ]
   },
   answer: {
     type: [
       {
-        value: { type: String, required: true },
-        prefill: { type: Boolean, required: true }
+        value: String,
+        prefill: Boolean,
+        isSentenceConnector: Boolean
       }
     ],
     required: true

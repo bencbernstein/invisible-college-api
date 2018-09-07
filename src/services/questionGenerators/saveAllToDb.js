@@ -1,4 +1,5 @@
 const _ = require("underscore")
+const pos = require("pos")
 
 require("../../lib/db")()
 
@@ -6,13 +7,40 @@ const QuestionModel = require("../../models/question")
 const QuestionSequenceModel = require("../../models/questionSequence")
 const TextModel = require("../../models/text")
 const WordModel = require("../../models/word")
+const ChoiceSetModel = require("../../models/choiceSet")
+const CONNECTORS = _.flatten(
+  require("../../lib/connectors").map(c => c.elements)
+)
 
-const generateQuestionsForWord = require("./word/index")
+const wordQuestions = require("./word/index")
 
 const {
-  generateQuestionsForText,
-  generateAdditionalQuestionsForText
+  passageQuestions,
+  additionalPassageQuestions
 } = require("./sentence/index")
+
+const createWordQuestions = async query => {
+  const docs = await WordModel.find(query)
+
+  const promises = docs.map(
+    async doc => await wordQuestions(doc, docs, query.category)
+  )
+
+  return Promise.all(promises)
+}
+
+const createTextQuestions = async query => {
+  let passages = _.flatten(
+    (await TextModel.find({}, { passages: 1, _id: 0 })).map(t => t.passages)
+  )
+  passages = _.shuffle(passages.filter(p => p.isEnriched))
+
+  // const additionalTextQs = generateAdditionalQuestionsForText(textQs)
+
+  return Promise.all(
+    passages.map(p => passageQuestions(p, passages, query.category))
+  )
+}
 
 exports.generate = async category => {
   await QuestionModel.remove()
@@ -20,44 +48,24 @@ exports.generate = async category => {
 
   const query = category ? { categories: category } : {}
 
-  const texts = await TextModel.find(query, { _id: 1, name: 1 })
-  const words = await WordModel.find(query, { _id: 1, value: 1 })
+  let questions = _.flatten([
+    await createWordQuestions(query),
+    await createTextQuestions(query)
+  ])
 
-  const promises = texts.map(
-    async text => await generateQuestionsForText(text._id, category)
-  )
+  questions = _.shuffle(questions)
+  questions.forEach(q => console.log(q.TYPE))
 
-  const textQs = _.flatten(await Promise.all(promises))
-  // const additionalTextQs = generateAdditionalQuestionsForText(textQs)
-
-  const questions = await QuestionModel.create(textQs)
-
-  await QuestionSequenceModel.create({
-    name: "test sequence",
-    questions: questions.map(q => q._id)
-  })
-
-  console.log("success")
-  process.exit(0)
-
-  /*for (const word of words) {
-    wordCounter += 1
-    console.log(
-      `${wordCounter}/${words.length} Creating questions for word: ${
-        word.value
-      }`
-    )
-
-    const questionsForWord = _.compact(
-      _.flatten(await generateQuestionsForWord(word._id, category))
-    )
-
-    try {
-      await QuestionModel.create(questionsForWord)
-    } catch (e) {
-      console.log(e.message)
-    }
+  try {
+    questions = await QuestionModel.create(questions)
+    console.log("Succesfully created " + questions.length + " questions")
+    const name = "test sequence"
+    questions = questions.map(q => q._id)
+    await QuestionSequenceModel.create({ name, questions })
+    console.log("Succesfully created " + name)
+  } catch (e) {
+    console.log(e)
   }
 
-  return*/
+  process.exit(0)
 }

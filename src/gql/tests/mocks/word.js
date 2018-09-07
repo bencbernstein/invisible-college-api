@@ -174,6 +174,42 @@ const words = [
     images: []
   },
   {
+    _id: mongoose.Types.ObjectId(),
+    value: "keratosis",
+    isDecomposable: true,
+    synonyms: [],
+    components: [
+      {
+        isRoot: true,
+        value: "ker"
+      },
+      {
+        isRoot: false,
+        value: "at"
+      },
+      {
+        isRoot: false,
+        value: "osis"
+      }
+    ],
+    definition: [
+      {
+        value: "a medical condition in which a hard ",
+        highlight: false
+      },
+      {
+        value: "horn",
+        highlight: true
+      },
+      {
+        value: "-like substance grows on the skin",
+        highlight: false
+      }
+    ],
+    obscurity: 5,
+    images: []
+  },
+  {
     _id: CARDIOGRAM_ID,
     value: "cardiogram",
     isDecomposable: true,
@@ -219,42 +255,6 @@ const words = [
       {
         value: "heart",
         highlight: true
-      }
-    ],
-    obscurity: 5,
-    images: []
-  },
-  {
-    _id: mongoose.Types.ObjectId(),
-    value: "keratosis",
-    isDecomposable: true,
-    synonyms: [],
-    components: [
-      {
-        isRoot: true,
-        value: "ker"
-      },
-      {
-        isRoot: false,
-        value: "at"
-      },
-      {
-        isRoot: false,
-        value: "osis"
-      }
-    ],
-    definition: [
-      {
-        value: "a medical condition in which a hard ",
-        highlight: false
-      },
-      {
-        value: "horn",
-        highlight: true
-      },
-      {
-        value: "-like substance grows on the skin",
-        highlight: false
       }
     ],
     obscurity: 5,

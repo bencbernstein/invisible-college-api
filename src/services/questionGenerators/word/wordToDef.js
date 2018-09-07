@@ -1,6 +1,10 @@
 const _ = require("underscore")
 
 const wordToDef = (doc, redHerringDocs, reverse) => {
+  if (doc.definition.length === 0) {
+    return []
+  }
+
   const questions = []
   redHerringDocs = redHerringDocs.slice(0, 5)
 

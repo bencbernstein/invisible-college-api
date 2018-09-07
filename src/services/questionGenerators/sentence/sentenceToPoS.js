@@ -19,39 +19,26 @@ const PART_OF_SPEECH = {
   MD: "modal"
 }
 
-const question = passage => {
-  let questions = []
+module.exports = passage => {
+  const questions = []
 
-  for (let sentence of passage.tagged) {
-    const focusWordIndices = _.findIndex(sentence, word => word.isFocusWord)
+  const focusWordIndices = passage.tagged
+    .map((word, idx) => word.isFocusWord && idx)
+    .filter(idx => idx > -1)
 
-    const indices = sentence
-      .map((word, idx) => word.isFocusWord && idx)
-      .filter(idx => idx > -1)
-
-    questions = questions.concat(
-      indices.map(idx => {
-        let params = {}
-
-        params.prompt = sentence.map((word, idx2) => ({
-          value: word.value,
-          highlight: idx === idx2
-        }))
-
-        const answer = sentence[idx].tag
-        params.answer = [{ value: PART_OF_SPEECH[answer], prefill: false }]
-
-        params.redHerrings = _.sample(
-          _.without(_.values(PART_OF_SPEECH), PART_OF_SPEECH[answer]),
-          5
-        )
-
-        return params
-      })
-    )
-  }
+  focusWordIndices.forEach(idx => {
+    const prompt = passage.tagged.map((word, idx2) => {
+      let params = { value: word.value }
+      if (idx === idx2) {
+        params.highlight = true
+      }
+      return params
+    })
+    const value = PART_OF_SPEECH[passage.tagged[idx].tag]
+    const answer = [{ value, prefill: false }]
+    const redHerrings = _.sample(_.without(_.values(PART_OF_SPEECH), value), 5)
+    return questions.push({ prompt, answer, redHerrings })
+  })
 
   return questions
 }
-
-module.exports = doc => doc.passages.map(question)

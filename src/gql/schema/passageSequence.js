@@ -2,6 +2,11 @@ const _u = require("underscore")
 const PassageSequenceModel = require("../../models/passageSequence")
 const TextModel = require("../../models/text")
 
+const SUB_CONJ = _u.find(
+  require("../../lib/connectors"),
+  c => c.type === "subordinating conjunction"
+).elements
+
 const passageSequenceTypeDefs = `
 type PassageSequence {
   id: ID
@@ -102,7 +107,8 @@ const passageSequenceResolvers = {
       const passage = passageObjs.splice(passageIdx, 1)
 
       const connectorCount = passage =>
-        _u.flatten(passage.tagged).filter(t => t.isConnector).length
+        _u.flatten(passage.tagged).filter(t => SUB_CONJ.indexOf(t.value) > -1)
+          .length
 
       const allConnectorCounts = passageObjs.map(connectorCount)
       const newConnectorCount = connectorCount(passage)
