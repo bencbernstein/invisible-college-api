@@ -19,25 +19,28 @@ type Sources {
 }
 
 type PromptPart {
-  value: String!
-  highlight: Boolean!
+  value: String
+  highlight: Boolean
+  isSentenceConnector: Boolean  
 }
 
 type AnswerPart {
-  value: String!
-  prefill: Boolean!  
+  value: String
+  prefill: Boolean
+  isSentenceConnector: Boolean
 }
 
 type Question {
   id: ID
   TYPE: String!
-  prompt: [PromptPart]!
-  answer: [AnswerPart]!
-  redHerrings: [String]!
+  prompt: [PromptPart]
+  answer: [AnswerPart]
+  redHerrings: [String]
   sources: Sources!
 }
 
 extend type Query {
+  question(id: ID!): Question
   questionsForWord(id: ID!): [Question]
   questionsForText(id: ID!): [Question]
   questions(questionType: String, after: String): [Question]
@@ -46,6 +49,10 @@ extend type Query {
 
 const questionResolvers = {
   Query: {
+    async question(_, params) {
+      return QuestionModel.findById(params.id)
+    },
+
     async questions(_, params) {
       const query = {}
       if (params.after) {

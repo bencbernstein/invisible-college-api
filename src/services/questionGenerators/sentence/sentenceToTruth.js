@@ -4,32 +4,35 @@ const _ = require("underscore")
 
 const coinflip = () => Math.random() > 0
 
-const question = async (passage, word, idx) => {
-  const { wordId, choiceSetId, isFocusWord, value } = word
+const question = async (tagged, word, idx) => {
+  const { wordId, choiceSetId, value } = word
 
   const MAKE_WRONG = coinflip()
   let params = {}
   let followUpParams = {}
   let herring, herrings
 
-  if (wordId && isFocusWord) {
+  if (wordId) {
     const wordDoc = await WordModel.findById(wordId)
     const herringDocs = await WordModel.redHerring(wordDoc)
     herrings = herringDocs.map(h => h.value)
-  } else if (choiceSetId && isFocusWord) {
+  } else {
     const choiceSet = await ChoiceSetModel.findById(choiceSetId)
     herrings = _.without(choiceSet.choices, value)
-  } else {
-    return
   }
 
   herring = _.sample(herrings)
 
-  params.prompt = passage.map((word, idx2) => ({
-    value: idx === idx2 && MAKE_WRONG ? herring : word.value,
-    highlight: idx === idx2
-  }))
-
+  params.prompt = tagged.map((word, idx2) => {
+    if (word.isSentenceConnector) {
+      return word
+    }
+    const params = { value: idx === idx2 && MAKE_WRONG ? herring : word.value }
+    if (idx === idx2) {
+      params.highlight = true
+    }
+    return params
+  })
   params.answer = [{ prefill: false, value: MAKE_WRONG ? "FALSE" : "TRUE" }]
   params.redHerrings = [MAKE_WRONG ? "TRUE" : "FALSE"]
 
@@ -37,29 +40,23 @@ const question = async (passage, word, idx) => {
     return params
   }
 
-  followUpParams.answer = params.prompt.map(p => ({
-    value: p.value,
-    prefill: !p.highlight
-  }))
+  followUpParams.answer = params.prompt.map((p, idx2) => {
+    if (p.isSentenceConnector) {
+      return p
+    }
+    return { value: idx === idx2 ? value : p.value, prefill: !p.highlight }
+  })
 
   followUpParams.redHerrings = herrings
-
   return [params, followUpParams]
 }
 
-const questions = async passage => {
-  const flattened = _.flatten(passage.tagged)
-  const promises = flattened.map((word, idx) => question(flattened, word, idx))
-  return Promise.all(promises)
-}
-
-module.exports = doc => {
-  const promises = _.flatten(
-    doc.passages
-      .map(passage => _.flatten(passage.tagged))
-      .map(flattened =>
-        flattened.map((word, idx) => question(flattened, word, idx))
-      )
+module.exports = async passage =>
+  Promise.all(
+    passage.tagged.map(
+      (word, idx) =>
+        !word.isUnfocused &&
+        (word.wordId || word.choiceSetId) &&
+        question(passage.tagged, word, idx)
+    )
   )
-  return Promise.all(promises)
-}

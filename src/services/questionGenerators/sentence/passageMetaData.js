@@ -3,35 +3,26 @@ const TextModel = require("../../../models/text")
 
 const ATTRS = ["date", "source", "name", "author"]
 
-const question = async (passage, attr, attrs) => {
-  const value = attrs[attr]
+const question = async (passage, attr, passages) => {
+  const value = passage[attr]
 
   if (!value) {
     return
   }
 
-  const params = {}
+  const prompt = passage.tagged.map(
+    word => (word.isSentenceConnector ? word : { value: word.value })
+  )
+  const answer = [{ prefill: false, value }]
 
-  params.prompt = _.flatten(passage.tagged).map(p => ({
-    value: p.value,
-    highlight: false
-  }))
+  const redHerrings = _.uniq(
+    passages.map(p => p[attr]).filter(a => a && a !== value)
+  ).slice(0, 5)
 
-  params.answer = [{ prefill: false, value }]
+  const TYPE = "PASSAGE_TO_" + attr.toUpperCase()
 
-  params.redHerrings = await TextModel.redHerrings(attr, value)
-  params.TYPE = "PASSAGE_TO_" + attr.toUpperCase()
-
-  return params
+  return { prompt, answer, redHerrings, TYPE }
 }
 
-module.exports = async doc => {
-  const attrs = _.pick(doc, ATTRS)
-
-  const promises = _.flatten(
-    doc.passages.map(p => ATTRS.map(a => [p, a])),
-    1
-  ).map(async params => await question(params[0], params[1], attrs))
-
-  return Promise.all(promises)
-}
+module.exports = async (passage, passages) =>
+  Promise.all(ATTRS.map(a => question(passage, a, passages)))

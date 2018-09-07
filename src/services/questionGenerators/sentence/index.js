@@ -12,19 +12,24 @@ const TextModel = require("../../../models/text")
 const TYPES = {
   SENTENCE_TO_POS: sentenceToPoS,
   SENTENCE_TO_TRUTH: sentenceToTruth,
-  FINISH_THE_SENTENCE: finishTheSentence,
+  /*FINISH_THE_SENTENCE: finishTheSentence,*/
   PASSAGE_METADATA: passageMetaData,
   SCRAMBLE_PASSAGE: scramblePassage,
   SCRAMBLE_SENTENCE: scrambleSentence
 }
 
-exports.generateQuestionsForText = async (id, category, type) => {
-  const doc = await TextModel.findById(id)
-
+exports.passageQuestions = async (passage, passages, category, type) => {
   const generate = async TYPE => {
-    const questions = _.compact(_.flatten(await TYPES[TYPE](doc)))
-    questions.forEach(q => (q.TYPE = q.TYPE || TYPE))
-    return questions
+    try {
+      const questions = _.compact(
+        _.flatten(await TYPES[TYPE](passage, passages))
+      )
+      questions.forEach(q => (q.TYPE = q.TYPE || TYPE))
+      return questions
+    } catch (error) {
+      console.log("\nError generating TYPE=" + TYPE + "\n" + error)
+      return []
+    }
   }
 
   let questions
@@ -37,14 +42,14 @@ exports.generateQuestionsForText = async (id, category, type) => {
   }
 
   questions.forEach(q => {
-    q.sources = { id, value: doc.name }
+    q.sources = { id: passage._id, value: passage.name }
     q.categories = [category]
   })
 
   return questions
 }
 
-exports.generateAdditionalQuestionsForText = questions => {
+exports.additionalPassageQuestions = questions => {
   const falseSentences = questions.filter(
     q => q.TYPE === "SENTENCE_TO_TRUTH" && _.isEqual(q.redHerrings, ["FALSE"])
   )

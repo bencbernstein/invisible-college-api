@@ -1,26 +1,30 @@
 const _ = require("underscore")
 
-const question = passage =>
-  passage.tagged.map((sentence, idx) => {
-    if (sentence.length > 9) {
-      return
-    }
+const { toSentences } = require("../../../lib/helpers")
 
-    let params = {}
+module.exports = passage => {
+  const sentences = toSentences(passage)
 
-    params.answer = _.flatten(
-      passage.tagged.map((sentence, idx2) => {
+  if (sentences.length < 3) {
+    return
+  }
+
+  const questions = []
+
+  _.range(1, sentences.length - 1).forEach(idx => {
+    const answer = _.flatten(
+      sentences.map((sen, idx2) => {
         const prefill = idx !== idx2
-        if (prefill) {
-          const value = sentence.map(word => word.value).join(" ")
-          return { prefill, value }
-        } else {
-          return sentence.map(word => ({ prefill, value: word.value }))
+        if (!prefill) {
+          return sen.map(word => ({ value: word.value, prefill }))
         }
+        const value = sen.map(word => word.value).join(" ")
+        return { value, prefill }
       })
     )
 
-    return params
+    questions.push({ answer })
   })
 
-module.exports = doc => doc.passages.map(question)
+  return questions
+}
