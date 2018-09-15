@@ -1,3 +1,4 @@
+const _u = require("underscore")
 const WordModel = require("../../models/word")
 
 const { enrich } = require("../../services/OxfordDictionaryService")
@@ -44,6 +45,7 @@ type Enriched {
   definition: String
   synonyms: [String]
   tags: [String]
+  lemmas: [String]
 }
 
 extend type Mutation {
@@ -66,10 +68,8 @@ extend type Mutation {
 
 extend type Query {
   word(id: ID!): Word 
-}
-
-extend type Query {
   words(first: Int, after: String): [Word]
+  wordsToEnrich(attr: String): [Word]
 }
 `
 
@@ -84,6 +84,26 @@ const wordResolvers = {
       return WordModel.find(query)
         .limit(params.first || 20)
         .sort("value")
+    },
+
+    async wordsToEnrich(_, params) {
+      const { attr } = params
+      const query = {}
+
+      if (attr == "obscurity") {
+        query[attr] = { $exists: false }
+      } else if (attr !== "all") {
+        query[attr] = { $size: 0 }
+      }
+
+      let words = await WordModel.find(query)
+      word = _u.shuffle(words)
+
+      if (attr === "all") {
+        words = words.slice(0, 50)
+      }
+
+      return words
     }
   },
   Mutation: {

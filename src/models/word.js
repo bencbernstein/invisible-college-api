@@ -16,7 +16,8 @@ var wordSchema = new Schema({
         type: String,
         enum: categories
       }
-    ]
+    ],
+    default: []
   },
   components: {
     type: [
@@ -32,7 +33,8 @@ var wordSchema = new Schema({
         highlight: { type: Boolean, required: true },
         value: { type: String, required: true }
       }
-    ]
+    ],
+    default: []
   },
   tags: {
     type: [

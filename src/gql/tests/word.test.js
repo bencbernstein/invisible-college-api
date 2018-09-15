@@ -54,6 +54,32 @@ describe("words", () => {
     chai.assert.equal(found.id, word._id.toString())
   })
 
+  it.only("enriches a value", async function() {
+    const word = "magnanimous"
+
+    const query = `
+      mutation {
+        enrichWord (value: "${word}") {
+          value
+          definition
+          synonyms
+          tags
+          lemmas
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const enriched = result.data.enrichWord
+
+    console.log(result)
+
+    chai.assert.equal(2, 2)
+  })
+
   it("enriches a value", async function() {
     const query = `
       mutation {
@@ -154,5 +180,33 @@ describe("words", () => {
 
     chai.assert.isNotEmpty(words)
     chai.assert.isNotEmpty(choices)
+  })
+
+  it("gets word ids to enrich for an attribute", async function() {
+    const attr = "synonyms"
+
+    const query = `
+    query {
+      wordsToEnrich(attr: "${attr}") {
+        id
+        ${attr}
+      }
+    }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { wordsToEnrich } = result.data
+
+    chai.assert.equal(
+      wordsToEnrich.length,
+      wordMocks.filter(m => m.synonyms.length === 0).length
+    )
+
+    wordsToEnrich.forEach(word => {
+      chai.assert.isEmpty(word[attr])
+    })
   })
 })

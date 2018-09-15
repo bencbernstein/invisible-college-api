@@ -179,10 +179,12 @@ const textResolvers = {
         const sentences = tokenized.slice(obj.startIdx, obj.endIdx)
         obj.value = sentences.join(" ")
         // TODO: - check
-        obj.tagged = sentences
-          .map(s => tag(s, words, choiceSets))
-          .reduce((a, v) => [...a, v, { isSentenceConnector: true }], [])
-          .slice(0, -1)
+        obj.tagged = _u.flatten(
+          sentences
+            .map(s => tag(s, words, choiceSets))
+            .reduce((a, v) => [...a, v, { isSentenceConnector: true }], [])
+            .slice(0, -1)
+        )
         if (isMultipleSources) {
           obj.metadata = parseTextMetadata(tokenized, obj.startIdx)
         }
@@ -207,44 +209,22 @@ const textResolvers = {
       )
     },
     async updatePassage(_, params) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(params.update))
-        const { tagged, id, value } = decoded
-        const text = await TextModel.findOne({ "passages._id": id })
+      const decoded = JSON.parse(decodeURIComponent(params.update))
+      const { tagged, id, value } = decoded
 
-        const idx = _u.findIndex(text.passages, p => p._id.equals(id))
+      const text = await TextModel.findOne({ "passages._id": id })
+      const idx = _u.findIndex(text.passages, p => p._id.equals(id))
 
-        const passage = _u.extend({}, text.passages[idx], {
-          value,
-          tagged,
-          isEnriched: true
-        })
+      text.passages[idx].value = value
+      text.passages[idx].tagged = tagged
+      text.passages[idx].isEnriched = true
 
-        console.log(passage)
+      text.passagesCount = text.passages.length
+      text.unenrichedPassagesCount = text.passages.filter(
+        p => !p.isEnriched
+      ).length
 
-        text.passages.splice(idx, 1, passage)
-
-        text.passagesCount = text.passages.length
-        text.unenrichedPassagesCount = text.passages.filter(
-          p => !p.isEnriched
-        ).length
-
-        // console.log(tagged)
-        // console.log("\n")
-        // console.log(tagged[0])
-        // console.log("\n")
-        // console.log(text.passages[idx].tagged[0])
-        // console.log("\n")
-        // console.log(tagged[1])
-        // console.log("\n")
-        // console.log(text.passages[idx].tagged[1])
-        // console.log("\n")
-
-        await text.save()
-        return text
-      } catch (error) {
-        console.log(error.message.slice(0, 1500))
-      }
+      return text.save()
     },
     async removeText(_, params) {
       return TextModel.findByIdAndRemove(params.id)

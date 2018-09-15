@@ -153,7 +153,7 @@ const words = [
     _id: mongoose.Types.ObjectId(),
     value: "cardio",
     isDecomposable: true,
-    synonyms: [],
+    synonyms: ["exercise"],
     components: [
       {
         isRoot: true,
