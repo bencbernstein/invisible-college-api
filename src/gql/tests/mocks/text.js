@@ -7,15 +7,21 @@ const ID3 = mongoose.Types.ObjectId()
 const text = {
   _id: ID,
   name: "About Zoology",
-  source: "Harry & Peterson",
+  source: "About Zoology",
   tokenized: JSON.stringify([
     "A solar nebulas partitions carnivore out of a molecular cloud by gravitational collapse, which begins to spin and flatten into a circumstellar disk, and then the planets grow out of that disk with the Sun.",
     "A nebula contains gas, ice grains, and dust (including primordial nuclides).",
+    "Sed finibus erat neque, ut efficitur lectus feugiat at.",
+    "Sed finibus erat neque, ut efficitur lectus feugiat at.",
+    "Sed finibus erat neque, ut efficitur lectus feugiat at.",
+    "Sed finibus erat neque, ut efficitur lectus feugiat at.",
+    "Sed finibus erat neque, ut efficitur lectus feugiat at.",
+    "Sed finibus erat neque, ut efficitur lectus feugiat at.",
+    "Sed finibus erat neque, ut efficitur lectus feugiat at.",
     "Sed finibus erat neque, ut efficitur lectus feugiat at."
   ]),
   passagesCount: 2,
   unenrichedPassagesCount: 1,
-  characterCount: 105,
   passages: [
     {
       tagged: [
@@ -301,6 +307,7 @@ const text = {
       _id: ID2,
       startIdx: 5,
       endIdx: 8,
+      source: "About Zoology",
       value: "I am the first sentence. I am a carnivore.",
       isEnriched: true,
       tagged: [
@@ -332,7 +339,7 @@ const text = {
 const text2 = {
   _id: mongoose.Types.ObjectId(),
   name: "Anotha One",
-  source: "Rick Ross",
+  source: "Anotha One",
   tokenized: "[]",
   passagesCount: 0,
   unenrichedPassagesCount: 0,
@@ -342,6 +349,7 @@ const text2 = {
       _id: mongoose.Types.ObjectId(),
       startIdx: 5,
       endIdx: 8,
+      source: "Anotha One",
       source: "A Different Source",
       value: "I luh you",
       tagged: [

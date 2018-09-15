@@ -34,7 +34,7 @@ var textSchema = new Schema(
     passages: {
       type: [
         {
-          source: { type: String, required: true },
+          source: String,
           startIdx: { type: Number, required: true, min: 0 },
           endIdx: { type: Number, required: true },
           value: { type: String, required: true },

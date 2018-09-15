@@ -1,5 +1,6 @@
 const _ = require("underscore")
 const axios = require("axios")
+const get = require("lodash/get")
 
 const CONFIG = require("../lib/config")
 
@@ -8,35 +9,56 @@ const getSenses = apiResult =>
 
 const parseDefinition = res => {
   const obj = getSenses(res)[0]
-  const definition = obj.short_definitions[0]
+  const definition = obj.definitions[0]
   const tags = (obj.domains || []).map(str => str.toLowerCase())
   const thesaurusLink =
-    obj.thesaurusLinks.length && obj.thesaurusLinks[0].sense_id
+    get(obj.thesaurusLinks, "length") && obj.thesaurusLinks[0].sense_id
   return { definition, tags, thesaurusLink }
 }
 
+const getLemmas = async value =>
+  await axios
+    .get(CONFIG.DISCOVER_API_URL + "/lemmas?word=" + value)
+    .then(async res => res.error || res.data.lemmas)
+    .catch(error => {
+      console.log(error.message)
+      return {}
+    })
+
+// TODO: - clean lemmas in response, fetching more
 exports.enrich = async value => {
-  try {
-    const definitionEndpoint = CONFIG.OXFORD_DICT_URL + "entries/en/" + value
-    const thesaurusEndpoint = definitionEndpoint + "/synonyms"
+  const lemmas = await getLemmas(value)
 
-    const app_id = CONFIG.OXFORD_DICTIONARIES_API_ID
-    const app_key = CONFIG.OXFORD_DICTIONARIES_API_KEY
-    const headers = { app_id, app_key }
+  const definitionEndpoint = CONFIG.OXFORD_DICT_URL + "entries/en/" + value
+  const thesaurusEndpoint = definitionEndpoint + "/synonyms"
 
-    const [res1, res2] = await axios.all([
-      axios.get(definitionEndpoint, { headers }),
-      axios.get(thesaurusEndpoint, { headers })
-    ])
+  const app_id = CONFIG.OXFORD_DICTIONARIES_API_ID
+  const app_key = CONFIG.OXFORD_DICTIONARIES_API_KEY
+  const headers = { app_id, app_key }
 
-    const { definition, tags, thesaurusLink } = parseDefinition(res1)
+  return await axios
+    .get(definitionEndpoint, { headers })
+    .then(async res => {
+      const { definition, tags, thesaurusLink } = parseDefinition(res)
 
-    const link = _.find(getSenses(res2), s => s.id === thesaurusLink)
-    const synonyms = (link && link.synonyms.map(s => s.text)) || []
+      if (!thesaurusLink) {
+        return { definition, tags, lemmas }
+      }
 
-    return { definition, synonyms, tags }
-  } catch (error) {
-    console.error("ERR: " + error.message)
-    return { synonyms: [], tags: [] }
-  }
+      return await axios
+        .get(thesaurusEndpoint, { headers })
+        .then(res2 => {
+          const link = _.find(getSenses(res2), s => s.id === thesaurusLink)
+          const synonyms = (link && link.synonyms.map(s => s.text)) || []
+          return { definition, tags, synonyms, lemmas }
+        })
+        .catch(error => {
+          console.log(error.message)
+          return { definition, tags, lemmas }
+        })
+    })
+    .catch(error => {
+      console.log(error.message)
+      return { lemmas }
+    })
 }
