@@ -16,9 +16,10 @@ const parseDefinition = res => {
   return { definition, tags, thesaurusLink }
 }
 
+// TODO - fix now it has lcd
 const getLemmas = async value =>
   await axios
-    .get(CONFIG.DISCOVER_API_URL + "/lemmas?word=" + value)
+    .get(CONFIG.DISCOVER_API_URL + "lemmas?word=" + value)
     .then(async res => res.error || res.data.lemmas)
     .catch(error => {
       console.log(error.message)
