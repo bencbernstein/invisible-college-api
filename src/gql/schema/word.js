@@ -35,6 +35,7 @@ type Word {
   definition: [Definition]!
   obscurity: Int
   images: [String]
+  lcd: String
   otherForms: [String]
   tags: [Tag]
   unverified: Unverified
@@ -68,6 +69,7 @@ extend type Mutation {
 
 extend type Query {
   word(id: ID!): Word 
+  wordsByValues(values: String): [Word]
   words(first: Int, after: String): [Word]
   wordsToEnrich(attr: String): [Word]
 }
@@ -84,6 +86,10 @@ const wordResolvers = {
       return WordModel.find(query)
         .limit(params.first || 20)
         .sort("value")
+    },
+
+    async wordsByValues(_, params) {
+      return WordModel.find({ value: params.values.split(",") })
     },
 
     async wordsToEnrich(_, params) {

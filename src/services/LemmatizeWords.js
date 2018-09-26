@@ -1,20 +1,29 @@
 require("../lib/db")()
 
 const WordModel = require("../models/word")
-const lemmatizations = JSON.parse(require("./lemmatizations.json"))
+
+const axios = require("axios")
+
+const DISCOVER_API_URL = require("../lib/config").DISCOVER_API_URL
 
 const run = async () => {
-  const words = await WordModel.find({
-    value: { $in: Object.keys(lemmatizations) }
-  })
+  const words = await WordModel.find({ otherForms: { $exists: false } })
 
-  const promises = words.map(async word => {
-    word.otherForms = lemmatizations[word.value]
-    return await word.save()
-  })
+  for (let word of words) {
+    console.log("getting lemmatizations for " + word.value)
+    const url = DISCOVER_API_URL + "lemmatizations?word=" + word.value
+    const data = await axios
+      .get(url)
+      .then(async res => {
+        const { lcd, lemmas } = res.data
+        await WordModel.findByIdAndUpdate(word._id, {
+          $set: { lcd, otherForms: lemmas }
+        })
+      })
+      .catch(error => console.log(error.message))
+  }
 
-  await Promise.all(promises)
-  process.exit(0)
+  return process.exit(0)
 }
 
 run()

@@ -9,7 +9,8 @@ var wordSchema = new Schema({
   value: { type: String, required: true },
   isDecomposable: { type: Boolean, required: true, default: false },
   synonyms: { type: [String], default: [] },
-  otherForms: { type: [String], default: [] },
+  lcd: String,
+  otherForms: { type: [String] },
   categories: {
     type: [
       {

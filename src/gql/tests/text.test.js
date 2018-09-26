@@ -50,7 +50,7 @@ describe("texts", () => {
     chai.assert.equal(found.id, text._id.toString())
   })
 
-  it.only("saves passages for a text", async () => {
+  it("saves passages for a text", async () => {
     const ranges = [[0, 3], [5, 6]]
 
     const query = `
@@ -133,7 +133,7 @@ describe("texts", () => {
     chai.assert.equal(updated.passages.length, text.passages.length - 1)
   })
 
-  it.only("updates a passages for a text", async () => {
+  it("updates a passages for a text", async () => {
     const newPassage = {
       id: text.passages[0]._id,
       value: "something different",

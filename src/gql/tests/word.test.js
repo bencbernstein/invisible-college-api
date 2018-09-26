@@ -54,7 +54,27 @@ describe("words", () => {
     chai.assert.equal(found.id, word._id.toString())
   })
 
-  it.only("enriches a value", async function() {
+  it.only("finds words by their values", async function() {
+    const values = wordMocks.slice(0, 3).map(doc => doc.value)
+
+    const query = `
+      query {
+        wordsByValues (values: "${values.join(",")}") {
+          id
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { wordsByValues } = result.data
+
+    chai.assert.equal(values.length, wordsByValues.length)
+  })
+
+  it("enriches a value", async function() {
     const word = "magnanimous"
 
     const query = `
