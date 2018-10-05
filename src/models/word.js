@@ -56,7 +56,12 @@ var wordSchema = new Schema({
     default: {}
   },
   obscurity: Number,
-  images: { type: [Schema.Types.ObjectId], required: true, default: [] }
+  images: { type: [Schema.Types.ObjectId], required: true, default: [] },
+  passages: { type: [Schema.Types.ObjectId], required: true, default: [] },
+  unfilteredPassagesCount: { type: Number, required: true, default: 0 },
+  rejectedPassagesCount: { type: Number, required: true, default: 0 },
+  acceptedPassagesCount: { type: Number, required: true, default: 0 },
+  enrichedPassagesCount: { type: Number, required: true, default: 0 }
 })
 
 wordSchema.methods.simpleDefinition = function() {
@@ -102,6 +107,19 @@ wordSchema.statics.redHerring = async function(doc) {
   }
 
   return this.find(basicQuery).limit(5)
+}
+
+wordSchema.statics.updatePassageStatus = async function updatePassageStatus(
+  id,
+  from,
+  to
+) {
+  const words = await this.find({ passages: id })
+  words.forEach(w => {
+    w[`${from}PassagesCount`] -= 1
+    w[`${to}PassagesCount`] += 1
+  })
+  return Promise.all(words.map(w => w.save()))
 }
 
 wordSchema.pre("save", async function(next) {

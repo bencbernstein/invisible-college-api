@@ -54,7 +54,7 @@ describe("words", () => {
     chai.assert.equal(found.id, word._id.toString())
   })
 
-  it.only("finds words by their values", async function() {
+  it("finds words by their values", async function() {
     const values = wordMocks.slice(0, 3).map(doc => doc.value)
 
     const query = `
@@ -74,74 +74,74 @@ describe("words", () => {
     chai.assert.equal(values.length, wordsByValues.length)
   })
 
-  it("enriches a value", async function() {
-    const word = "magnanimous"
+  // it("enriches a value", async function() {
+  //   const word = "magnanimous"
 
-    const query = `
-      mutation {
-        enrichWord (value: "${word}") {
-          value
-          definition
-          synonyms
-          tags
-          lemmas
-        }
-      }
-    `
+  //   const query = `
+  //     mutation {
+  //       enrichWord (value: "${word}") {
+  //         value
+  //         definition
+  //         synonyms
+  //         tags
+  //         lemmas
+  //       }
+  //     }
+  //   `
 
-    const rootValue = {}
-    const context = {}
+  //   const rootValue = {}
+  //   const context = {}
 
-    const result = await graphql(schema, query, rootValue, context)
-    const enriched = result.data.enrichWord
+  //   const result = await graphql(schema, query, rootValue, context)
+  //   const enriched = result.data.enrichWord
 
-    console.log(result)
+  //   console.log(result)
 
-    chai.assert.equal(2, 2)
-  })
+  //   chai.assert.equal(2, 2)
+  // })
 
-  it("enriches a value", async function() {
-    const query = `
-      mutation {
-        enrichWord (value: "${newWord}") {
-          value
-          definition
-          synonyms
-          tags
-        }
-      }
-    `
+  // it("enriches a value", async function() {
+  //   const query = `
+  //     mutation {
+  //       enrichWord (value: "${newWord}") {
+  //         value
+  //         definition
+  //         synonyms
+  //         tags
+  //       }
+  //     }
+  //   `
 
-    const rootValue = {}
-    const context = {}
+  //   const rootValue = {}
+  //   const context = {}
 
-    const result = await graphql(schema, query, rootValue, context)
-    const enriched = result.data.enrichWord
+  //   const result = await graphql(schema, query, rootValue, context)
+  //   const enriched = result.data.enrichWord
 
-    chai.assert.equal(enriched.value, newWord)
-    chai.assert.equal(enriched.definition, definition)
-  })
+  //   chai.assert.equal(enriched.value, newWord)
+  //   chai.assert.equal(enriched.definition, definition)
+  // })
 
-  it("automatically enriches a new word", async function() {
-    const query = `
-      mutation {
-        addWord (value: "${newWord}") {
-          id
-          unverified {
-            definition
-          }
-        }
-      }
-    `
+  // it("automatically enriches a new word", async function() {
+  //   const query = `
+  //     mutation {
+  //       addWord (value: "${newWord}") {
+  //         id
+  //         unverified {
+  //           definition
+  //         }
+  //       }
+  //     }
+  //   `
 
-    const rootValue = {}
-    const context = {}
+  //   const rootValue = {}
+  //   const context = {}
 
-    const result = await graphql(schema, query, rootValue, context)
-    const enriched = result.data.addWord
+  //   const result = await graphql(schema, query, rootValue, context)
+  //   const enriched = result.data.addWord
 
-    chai.assert.equal(enriched.unverified.definition, definition)
-  })
+  //   chai.assert.equal(enriched.unverified.definition, definition)
+  // })
 
   it("updates a word", async function() {
     const encoded = encodeURIComponent(
@@ -228,5 +228,49 @@ describe("words", () => {
     wordsToEnrich.forEach(word => {
       chai.assert.isEmpty(word[attr])
     })
+  })
+
+  it("gets passages for a word", async function() {
+    const query = `
+    query {
+      passagesForWord(value: "${word.value}") {
+        id
+        value
+      }
+    }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { passagesForWord } = result.data
+
+    chai.assert.equal(passagesForWord.length, word.passages.length)
+    chai.assert.include(word.passages, passagesForWord[0].id)
+  })
+
+  it.only("recommends available passage queus", async function() {
+    const type = "unfiltered"
+    const query = `
+    query {
+      recommendPassageQueues(type: "${type}")
+    }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { recommendPassageQueues } = result.data
+
+    chai.assert.isNotEmpty(recommendPassageQueues)
+    chai.assert.deepEqual(
+      recommendPassageQueues.sort(),
+      wordMocks
+        .filter(m => m.unfilteredPassagesCount > 0)
+        .map(m => m.value)
+        .sort()
+    )
   })
 })
