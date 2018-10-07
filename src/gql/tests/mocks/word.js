@@ -84,6 +84,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 1,
+    acceptedPassagesCount: 2,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 4,
     images: []
   },
   {
@@ -118,6 +122,9 @@ const words = [
     obscurity: 5,
     images: [],
     unfilteredPassagesCount: 1,
+    acceptedPassagesCount: 4,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 6,
     passages: passage._id
   },
   {
@@ -158,6 +165,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 7,
+    acceptedPassagesCount: 10,
+    rejectedPassagesCount: 12,
+    enrichedPassagesCount: 3,
     images: []
   },
   {
@@ -182,6 +193,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 2,
+    acceptedPassagesCount: 2,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 4,
     images: []
   },
   {
@@ -218,6 +233,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 1,
+    acceptedPassagesCount: 2,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 4,
     images: []
   },
   {
@@ -269,6 +288,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 1,
+    acceptedPassagesCount: 2,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 4,
     images: []
   }
 ]

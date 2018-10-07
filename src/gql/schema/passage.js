@@ -1,3 +1,4 @@
+const mongoose = require("mongoose")
 const pos = require("pos")
 const { flatten, findIndex } = require("underscore")
 
@@ -70,6 +71,7 @@ const tag = (value, words, choiceSets) => {
 
 const convert = (data, words, choiceSets) => {
   const { source, title, matchIdx, context } = data
+  const _id = mongoose.Types.ObjectId()
   const value = context.join(" ")
   const status = "unfiltered"
   const tagged = flatten(
@@ -79,6 +81,7 @@ const convert = (data, words, choiceSets) => {
       .slice(0, -1)
   )
   return {
+    _id,
     source,
     title,
     matchIdx,
@@ -109,9 +112,13 @@ const passageResolvers = {
       passages.forEach(p =>
         p.tagged.forEach(w => {
           if (w.wordId) {
-            wordToPassageIds[w.wordId] = wordToPassageIds[w.wordId]
-              ? wordToPassageIds[w.wordId].concat(w.wordId)
-              : [w.wordId]
+            if (wordToPassageIds[w.wordId]) {
+              if (wordToPassageIds[w.wordId].indexOf(p._id) === -1) {
+                wordToPassageIds[w.wordId].push(p._id)
+              }
+            } else {
+              wordToPassageIds[w.wordId] = [p._id]
+            }
           }
         })
       )
@@ -138,10 +145,8 @@ const passageResolvers = {
           .sort()
       }
 
-      if (status !== passage.status) {
-        WordModel.updatePassageStatus(passage.status, status, id)
-        passage.status = status
-      }
+      WordModel.updatePassageStatus(id, passage.status, status)
+      passage.status = status
 
       try {
         await passage.save()
@@ -153,15 +158,8 @@ const passageResolvers = {
     async updatePassage2(_, params) {
       const { update, status } = params
       const decoded = JSON.parse(decodeURIComponent(params.update))
-      if (status !== decoded.status) {
-        const res = await WordModel.updatePassageStatus(
-          decoded.id,
-          decoded.status,
-          status
-        )
-        console.log(res)
-        decoded.status = status
-      }
+      await WordModel.updatePassageStatus(decoded.id, decoded.status, status)
+      decoded.status = status
       return PassageModel.findByIdAndUpdate(decoded.id, decoded, {
         new: true
       })

@@ -36,6 +36,58 @@ describe("words", () => {
     chai.assert.equal(words.length, wordMocks.length)
   })
 
+  describe("sorting", () => {
+    const attrs = ["value", "enrichedPassagesCount"]
+
+    attrs.forEach(attr => {
+      it(`returns word sorted by ${attr}`, async function() {
+        const length = 5
+        const query = `
+          query {
+            words(first: ${length}, sortBy: "${attr}") {
+              ${attr}
+            }
+          }
+        `
+
+        const rootValue = {}
+        const context = {}
+
+        const result = await graphql(schema, query, rootValue, context)
+        const words = result.data.words.map(w => w[attr])
+
+        let mocks = wordMocks.map(w => w[attr]).sort()
+        if (attr !== "value") {
+          mocks = mocks.reverse()
+        }
+        mocks = mocks.slice(0, length)
+
+        chai.assert.deepEqual(words, mocks)
+      })
+    })
+
+    it.only("paginates", async function() {
+      const length = 5
+      const mocks = wordMocks.map(w => w.value).sort()
+
+      const query = `
+        query {
+          words(first: ${length}, sortBy: "value", after: "${mocks[1]}") {
+            value
+          }
+        }
+      `
+
+      const rootValue = {}
+      const context = {}
+
+      const result = await graphql(schema, query, rootValue, context)
+      const words = result.data.words.map(w => w.value)
+
+      chai.assert.deepEqual(words, mocks.slice(2, 7))
+    })
+  })
+
   it("finds a word by its id", async function() {
     const query = `
       query {
@@ -250,11 +302,12 @@ describe("words", () => {
     chai.assert.include(word.passages, passagesForWord[0].id)
   })
 
-  it.only("recommends available passage queus", async function() {
+  it("recommends available passage queus", async function() {
     const type = "unfiltered"
+    const limit = 10
     const query = `
     query {
-      recommendPassageQueues(type: "${type}")
+      recommendPassageQueues(type: "${type}", limit: ${limit})
     }
     `
 
@@ -265,12 +318,15 @@ describe("words", () => {
     const { recommendPassageQueues } = result.data
 
     chai.assert.isNotEmpty(recommendPassageQueues)
+    //
+    // Not the best test - it passes, but it's not really accounting for ties
     chai.assert.deepEqual(
       recommendPassageQueues.sort(),
       wordMocks
         .filter(m => m.unfilteredPassagesCount > 0)
         .map(m => m.value)
         .sort()
+        .slice(0, limit)
     )
   })
 })

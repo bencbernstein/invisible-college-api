@@ -114,6 +114,9 @@ wordSchema.statics.updatePassageStatus = async function updatePassageStatus(
   from,
   to
 ) {
+  if (from === to) {
+    return
+  }
   const words = await this.find({ passages: id })
   words.forEach(w => {
     w[`${from}PassagesCount`] -= 1

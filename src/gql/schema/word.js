@@ -90,13 +90,16 @@ const wordResolvers = {
 
     words(_, params) {
       const { first, after, sortBy } = params
+      const ascending = sortBy === "value" // Add asc. / desc. option later?
       const query = {}
+      const sort = {}
+      sort[sortBy] = ascending ? 1 : -1
       if (after) {
-        query[sortBy] = { $gt: after }
+        query[sortBy] = ascending ? { $gt: after } : { $lt: after }
       }
       return WordModel.find(query)
         .limit(first || 20)
-        .sort(sortBy)
+        .sort(sort)
     },
 
     async wordsByValues(_, params) {
