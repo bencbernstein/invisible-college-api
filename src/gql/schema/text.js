@@ -34,12 +34,17 @@ type Metadata {
 type Passage {
   id: ID!
   startIdx: Int!
+  filteredSentences: [Int]
   endIdx: Int!
   value: String
   sequence: String
   tagged: [Tagged]
   isEnriched: Boolean
   metadata: Metadata
+  status: String
+  matchIdx: Int
+  title: String
+  source: String
 }
 
 type Text {

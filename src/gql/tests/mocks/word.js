@@ -1,9 +1,12 @@
 const mongoose = require("mongoose")
-
+const _ = require("underscore")
 const ID = mongoose.Types.ObjectId()
 const ID2 = mongoose.Types.ObjectId()
 
 const CARDIOGRAM_ID = mongoose.Types.ObjectId()
+
+const passages = require("./passage").mocks
+const passage = passages.shift()
 
 const word = {
   _id: ID,
@@ -48,7 +51,13 @@ const word = {
     synonyms: ["solar system"],
     tags: ["dwarf star", "neutron"]
   },
-  images: [require("./image").mock._id]
+  images: [require("./image").mock._id],
+  unfilteredPassagesCount: passages.filter(m => m.status === "unfiltered")
+    .length,
+  acceptedPassagesCount: passages.filter(m => m.status === "accepted").length,
+  rejectedPassagesCount: passages.filter(m => m.status === "rejected").length,
+  enrichedPassagesCount: passages.filter(m => m.status === "enriched").length,
+  passages: passages.map(m => m._id)
 }
 
 const words = [
@@ -75,6 +84,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 1,
+    acceptedPassagesCount: 2,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 4,
     images: []
   },
   {
@@ -107,7 +120,12 @@ const words = [
       }
     ],
     obscurity: 5,
-    images: []
+    images: [],
+    unfilteredPassagesCount: 1,
+    acceptedPassagesCount: 4,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 6,
+    passages: passage._id
   },
   {
     _id: mongoose.Types.ObjectId(),
@@ -147,6 +165,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 7,
+    acceptedPassagesCount: 10,
+    rejectedPassagesCount: 12,
+    enrichedPassagesCount: 3,
     images: []
   },
   {
@@ -171,6 +193,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 2,
+    acceptedPassagesCount: 2,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 4,
     images: []
   },
   {
@@ -207,6 +233,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 1,
+    acceptedPassagesCount: 2,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 4,
     images: []
   },
   {
@@ -258,6 +288,10 @@ const words = [
       }
     ],
     obscurity: 5,
+    unfilteredPassagesCount: 1,
+    acceptedPassagesCount: 2,
+    rejectedPassagesCount: 3,
+    enrichedPassagesCount: 4,
     images: []
   }
 ]

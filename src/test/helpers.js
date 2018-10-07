@@ -10,6 +10,7 @@ const ChoiceSet = require("../models/choiceSet")
 const Question = require("../models/question")
 const QuestionSequence = require("../models/questionSequence")
 const PassageSequence = require("../models/passageSequence")
+const Passage = require("../models/passage")
 
 const choiceSetMocks = require("../gql/tests/mocks/choiceSet").mocks
 const textMocks = require("../gql/tests/mocks/text").mocks
@@ -21,6 +22,8 @@ const passageSequenceMocks = require("../gql/tests/mocks/passageSequence").mocks
 const questionSequenceMocks = require("../gql/tests/mocks/questionSequence")
   .mocks
 
+const passageMocks = require("../gql/tests/mocks/passage").mocks
+
 const collections = [
   { model: ChoiceSet, mocks: choiceSetMocks },
   { model: User, mocks: userMocks },
@@ -29,7 +32,8 @@ const collections = [
   { model: Image, mocks: imageMocks },
   { model: Question, mocks: questionMocks },
   { model: QuestionSequence, mocks: questionSequenceMocks },
-  { model: PassageSequence, mocks: passageSequenceMocks }
+  { model: PassageSequence, mocks: passageSequenceMocks },
+  { model: Passage, mocks: passageMocks }
 ]
 
 let db = mongoose()

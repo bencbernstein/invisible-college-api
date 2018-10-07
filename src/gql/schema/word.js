@@ -1,5 +1,6 @@
 const _u = require("underscore")
 const WordModel = require("../../models/word")
+const PassageModel = require("../../models/passage")
 
 const { enrich } = require("../../services/OxfordDictionaryService")
 
@@ -39,6 +40,10 @@ type Word {
   otherForms: [String]
   tags: [Tag]
   unverified: Unverified
+  unfilteredPassagesCount: Int
+  rejectedPassagesCount: Int
+  acceptedPassagesCount: Int
+  enrichedPassagesCount: Int
 }
 
 type Enriched {
@@ -70,8 +75,10 @@ extend type Mutation {
 extend type Query {
   word(id: ID!): Word 
   wordsByValues(values: String): [Word]
-  words(first: Int, after: String): [Word]
+  words(first: Int, sortBy: String, after: String): [Word]
   wordsToEnrich(attr: String): [Word]
+  passagesForWord(value: String): [Passage]
+  recommendPassageQueues(type: String!, limit: Int): [String]
 }
 `
 
@@ -82,14 +89,26 @@ const wordResolvers = {
     },
 
     words(_, params) {
-      const query = params.after ? { value: { $gt: params.after } } : {}
+      const { first, after, sortBy } = params
+      const ascending = sortBy === "value" // Add asc. / desc. option later?
+      const query = {}
+      const sort = {}
+      sort[sortBy] = ascending ? 1 : -1
+      if (after) {
+        query[sortBy] = ascending ? { $gt: after } : { $lt: after }
+      }
       return WordModel.find(query)
-        .limit(params.first || 20)
-        .sort("value")
+        .limit(first || 20)
+        .sort(sort)
     },
 
     async wordsByValues(_, params) {
       return WordModel.find({ value: params.values.split(",") })
+    },
+
+    async passagesForWord(_, params) {
+      const word = await WordModel.findOne({ value: params.value })
+      return PassageModel.find({ _id: word.passages })
     },
 
     async wordsToEnrich(_, params) {
@@ -110,6 +129,15 @@ const wordResolvers = {
       }
 
       return words
+    },
+
+    async recommendPassageQueues(_, params) {
+      const query = {}
+      query[`${params.type}PassagesCount`] = { $gt: 0 }
+      const words = await WordModel.find(query, { value: 1 }).limit(
+        params.limit || 3
+      )
+      return words.map(w => w.value)
     }
   },
   Mutation: {
@@ -123,10 +151,10 @@ const wordResolvers = {
       const unverified = await enrich(value)
       return { value, ...unverified }
     },
-    async removeWord(_, params) {
+    removeWord(_, params) {
       return WordModel.findByIdAndRemove(params.id)
     },
-    async updateWord(_, params) {
+    updateWord(_, params) {
       const decoded = JSON.parse(decodeURIComponent(params.word))
       return WordModel.findByIdAndUpdate(decoded.id, decoded, { new: true })
     }
