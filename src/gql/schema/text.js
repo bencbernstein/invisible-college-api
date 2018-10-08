@@ -11,7 +11,7 @@ const CONNECTORS = _u.flatten(
 
 const textTypeDefs = `
 type Tagged {
-  id: ID!
+  id: ID
   value: String
   tag: String
   isFocusWord: Boolean
