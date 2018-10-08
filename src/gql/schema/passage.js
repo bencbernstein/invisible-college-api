@@ -20,7 +20,7 @@ extend type Query {
 extend type Mutation {
   savePassages (
     passages: String!
-  ): [Passage]   
+  ): [String]   
 
   filterPassage (
     id: String!,
@@ -39,7 +39,6 @@ const tag = (value, words, choiceSets) => {
   const lexed = new pos.Lexer().lex(value)
   const tagger = new pos.Tagger()
   const tagged = tagger.tag(lexed).map(t => ({ value: t[0], tag: t[1] }))
-
   tagged.forEach(t => {
     const isPunctuation = t.value === t.tag
     const isConnector = CONNECTORS.indexOf(t.value) > -1
@@ -49,23 +48,19 @@ const tag = (value, words, choiceSets) => {
     } else if (isConnector) {
       t.isConnector = true
     } else {
-      const wordIdx = findIndex(
-        words.map(w => w.otherForms.concat(w.value)),
-        w => w.indexOf(t.value) > -1
-      )
+      const wordIdx = findIndex(words, w => w.values.indexOf(t.value) > -1)
       if (wordIdx > -1) {
         t.wordId = words[wordIdx]._id
       }
       const choiceSetIdx = findIndex(
-        choiceSets.map(c => c.choices),
-        c => c.indexOf(t.value) > -1
+        choiceSets,
+        c => c.values.indexOf(t.value) > -1
       )
       if (choiceSetIdx > -1) {
         t.choiceSetId = choiceSets[choiceSetIdx]._id
       }
     }
   })
-
   return tagged
 }
 
@@ -103,12 +98,18 @@ const passageResolvers = {
   },
   Mutation: {
     async savePassages(_, params) {
-      const words = await WordModel.find({}, { value: 1, otherForms: 1 })
-      const choiceSets = await ChoiceSetModel.find({}, { choices: 1 })
+      let words = await WordModel.find({}, { value: 1, otherForms: 1 })
+      words = words.map(w => ({
+        _id: w._id,
+        values: w.otherForms.concat(w.value)
+      }))
+      let choiceSets = await ChoiceSetModel.find({}, { choices: 1 })
+      choiceSets = choiceSets.map(c => ({ _id: c._id, values: c.choices }))
+
       const decoded = JSON.parse(decodeURIComponent(params.passages))
       const passages = decoded.map(data => convert(data, words, choiceSets))
-
       const wordToPassageIds = {}
+
       passages.forEach(p =>
         p.tagged.forEach(w => {
           if (w.wordId) {
@@ -132,7 +133,8 @@ const passageResolvers = {
         )
       )
 
-      return PassageModel.create(passages).catch(err => new Error(err))
+      PassageModel.collection.insert(passages) // TODO: - optimize insert so correct result can be returned
+      return []
     },
     async filterPassage(_, params) {
       const { id, indices, status } = params
