@@ -118,13 +118,11 @@ const passageResolvers = {
         })
       )
 
-      await Promise.all(
-        Object.keys(wordToPassageIds).map(id =>
-          WordModel.findByIdAndUpdate(id, {
-            $push: { passages: { $each: wordToPassageIds[id] } },
-            $inc: { unfilteredPassagesCount: wordToPassageIds[id].length }
-          })
-        )
+      Object.keys(wordToPassageIds).map(id =>
+        WordModel.findByIdAndUpdate(id, {
+          $push: { passages: { $each: wordToPassageIds[id] } },
+          $inc: { unfilteredPassagesCount: wordToPassageIds[id].length }
+        })
       )
 
       return PassageModel.create(passages).catch(err => new Error(err))
