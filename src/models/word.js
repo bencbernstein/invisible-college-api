@@ -117,7 +117,6 @@ wordSchema.statics.updatePassageStatus = async function updatePassageStatus(
     w[`${from}PassagesCount`] -= 1
     w[`${to}PassagesCount`] += 1
   })
-  words.forEach(console.log)
   return Promise.all(words.map(w => w.save()))
 }
 
