@@ -12,12 +12,7 @@ var wordSchema = new Schema({
   lcd: String,
   otherForms: { type: [String] },
   categories: {
-    type: [
-      {
-        type: String,
-        enum: categories
-      }
-    ],
+    type: [String],
     default: []
   },
   components: {
@@ -122,6 +117,7 @@ wordSchema.statics.updatePassageStatus = async function updatePassageStatus(
     w[`${from}PassagesCount`] -= 1
     w[`${to}PassagesCount`] += 1
   })
+  words.forEach(console.log)
   return Promise.all(words.map(w => w.save()))
 }
 

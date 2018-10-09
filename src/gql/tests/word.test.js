@@ -66,7 +66,7 @@ describe("words", () => {
       })
     })
 
-    it.only("paginates", async function() {
+    it("paginates", async function() {
       const length = 5
       const mocks = wordMocks.map(w => w.value).sort()
 

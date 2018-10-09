@@ -1,7 +1,13 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
+const { find } = require("underscore")
 
 const STATUSES = ["unfiltered", "accepted", "rejected", "enriched"]
+
+const SUB_CONJ = find(
+  require("../lib/connectors"),
+  c => c.type === "subordinating conjunction"
+).elements
 
 var passageSchema = new Schema({
   source: String,
@@ -30,6 +36,10 @@ var passageSchema = new Schema({
     required: true
   }
 })
+
+passageSchema.methods.connectorCount = function() {
+  return this.tagged.filter(t => SUB_CONJ.indexOf(t.value) > -1).length
+}
 
 const Model = mongoose.model("Passage", passageSchema)
 module.exports = Model
