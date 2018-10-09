@@ -114,20 +114,14 @@ const wordResolvers = {
     async wordsToEnrich(_, params) {
       const { attr } = params
       const query = {}
-
       if (attr == "obscurity") {
         query[attr] = { $exists: false }
       } else if (attr !== "all") {
         query[attr] = { $size: 0 }
       }
-
       let words = await WordModel.find(query)
       word = _u.shuffle(words)
-
-      if (attr === "all") {
-        words = words.slice(0, 50)
-      }
-
+      words = words.slice(0, 25)
       return words
     },
 
