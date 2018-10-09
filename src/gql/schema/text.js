@@ -33,9 +33,9 @@ type Metadata {
 
 type Passage {
   id: ID!
-  startIdx: Int!
+  startIdx: Int
   filteredSentences: [Int]
-  endIdx: Int!
+  endIdx: Int
   value: String
   sequence: String
   tagged: [Tagged]

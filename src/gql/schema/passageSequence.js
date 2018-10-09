@@ -1,11 +1,7 @@
-const _u = require("underscore")
+const { findIndex, flatten, without } = require("underscore")
 const PassageSequenceModel = require("../../models/passageSequence")
 const TextModel = require("../../models/text")
-
-const SUB_CONJ = _u.find(
-  require("../../lib/connectors"),
-  c => c.type === "subordinating conjunction"
-).elements
+const PassageModel = require("../../models/passage")
 
 const passageSequenceTypeDefs = `
 type PassageSequence {
@@ -31,6 +27,11 @@ extend type Mutation {
     passageId: String!
   ): PassageSequence  
 
+  removePassageFromPassageSequence (
+    id: ID!
+    passageId: String!
+  ): PassageSequence    
+
   createPassageSequence (
     name: String!
   ): PassageSequence
@@ -44,26 +45,12 @@ extend type Mutation {
 const passageSequenceResolvers = {
   Query: {
     passageSequences() {
-      return PassageSequenceModel.find().catch(err => new Error(err))
+      return PassageSequenceModel.find()
     },
 
     async passageSequence(_, params) {
       const passageSeq = await PassageSequenceModel.findById(params.id)
-      const passageIds = passageSeq.passages
-
-      const passageObjs = _u
-        .flatten(
-          (await TextModel.find({ "passages._id": passageIds })).map(
-            t => t.passages
-          )
-        )
-        .filter(p => passageIds.indexOf(p._id.toString()) > -1)
-
-      const passages = passageIds.map(id =>
-        _u.find(passageObjs, p => p._id.equals(id))
-      )
-
-      return passages
+      return PassageModel.find({ _id: { $in: passageSeq.passages } })
     }
   },
   Mutation: {
@@ -86,39 +73,36 @@ const passageSequenceResolvers = {
     },
 
     async addPassageToPassageSequence(_, params) {
-      const { passageId, id } = params
-
+      const { id, passageId } = params
       const passageSeq = await PassageSequenceModel.findById(id)
-      const passages = passageSeq.passages
-      const passageIds = passages.concat(passageId).map(String)
+      const ids = passageSeq.passages.concat(passageId).map(String)
+      const passages = await PassageModel.find({ _id: { $in: ids } })
 
-      const passageObjs = _u
-        .flatten(
-          (await TextModel.find(
-            {
-              "passages._id": passageIds
-            },
-            { passages: 1, _id: 0 }
-          )).map(t => t.passages)
-        )
-        .filter(p => passageIds.indexOf(p._id.toString()) > -1)
+      const passageIdx = findIndex(passages, p => p._id.equals(passageId))
+      const passage = passages.splice(passageIdx, 1)[0]
 
-      const passageIdx = _u.findIndex(passageObjs, p => p._id.equals(passageId))
-      const passage = passageObjs.splice(passageIdx, 1)
+      const allCounts = passages.map(d => d.connectorCount())
+      const newCount = passage.connectorCount()
 
-      const connectorCount = passage =>
-        _u.flatten(passage.tagged).filter(t => SUB_CONJ.indexOf(t.value) > -1)
-          .length
-
-      const allConnectorCounts = passageObjs.map(connectorCount)
-      const newConnectorCount = connectorCount(passage)
-
-      const idx = allConnectorCounts
-        .concat(newConnectorCount)
+      const idx = allCounts
+        .concat(newCount)
         .sort()
-        .indexOf(newConnectorCount)
+        .indexOf(newCount)
 
       passages.splice(idx, 0, passageId)
+      const count = passages.length
+
+      return PassageSequenceModel.findByIdAndUpdate(
+        params.id,
+        { $set: { passages, count } },
+        { new: true }
+      ).catch(err => new Error(err))
+    },
+
+    async removePassageFromPassageSequence(_, params) {
+      const { id, passageId } = params
+      const passageSeq = await PassageSequenceModel.findById(id)
+      const passages = without(passageSeq.passages.map(String), passageId)
       const count = passages.length
 
       return PassageSequenceModel.findByIdAndUpdate(

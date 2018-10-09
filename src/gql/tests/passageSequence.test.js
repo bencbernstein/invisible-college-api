@@ -10,7 +10,7 @@ const { seedDb } = require("../../test/helpers")
 const passageSequence = require("./mocks/passageSequence").mock
 const passageSequenceMocks = require("./mocks/passageSequence").mocks
 
-const textMocks = require("./mocks/text").mocks
+const passageMocks = require("./mocks/passage").mocks
 
 describe("passage sequences", () => {
   beforeEach(async () => await seedDb())
@@ -100,7 +100,7 @@ describe("passage sequences", () => {
   })
 
   it("adds a passage to a passage sequence", async function() {
-    const passageId = textMocks[1].passages[0]._id.toString()
+    const passageId = passageMocks[passageMocks.length - 1]._id
 
     const query = `
       mutation {
@@ -123,6 +123,30 @@ describe("passage sequences", () => {
     chai.assert.equal(updated.id, passageSequence._id)
     chai.assert.equal(updated.count, passageSequence.passages.length + 1)
     chai.assert.include(updated.passages, passageId)
+  })
+
+  it("removes a passage from a passage sequence", async function() {
+    const passageId = passageSequence.passages[0]
+
+    const query = `
+      mutation {
+        removePassageFromPassageSequence (id: "${
+          passageSequence._id
+        }", passageId: "${passageId}") {
+          id
+          count
+          passages
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const updated = result.data.removePassageFromPassageSequence
+
+    chai.assert.equal(updated.count, passageSequence.passages.length - 1)
   })
 
   it("remove a passage sequence", async function() {

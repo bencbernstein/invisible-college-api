@@ -125,7 +125,7 @@ const words = [
     acceptedPassagesCount: 4,
     rejectedPassagesCount: 3,
     enrichedPassagesCount: 6,
-    passages: passage._id
+    passages: [passage._id]
   },
   {
     _id: mongoose.Types.ObjectId(),

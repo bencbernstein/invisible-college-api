@@ -287,7 +287,7 @@ const passage = {
   ],
   source: "Wikipedia",
   status: "accepted",
-  filteredSentences: [0],
+  filteredSentences: [0, 2],
   title: "Carnivore",
   _id: "5b660afe9c181c0020ed7c2c",
   matchIdx: 1,
@@ -559,12 +559,33 @@ const secondaryMocks = [
         _id: "5b7c9046bc74da002092663c",
         value: ".",
         tag: "."
+      },
+      {
+        isSentenceConnector: true
+      },
+      {
+        _id: "5b7c9046bc74da0020926647",
+        value: "Hey",
+        tag: "NNP"
+      },
+      {
+        _id: "5b7c9046bc74da0020926646",
+        isConnector: true,
+        value: "dude",
+        tag: "CC"
+      },
+      {
+        isPunctuation: true,
+        _id: "5b7c9046bc74da002092663c",
+        value: ".",
+        tag: "."
       }
     ],
     source: "Wikipedia",
     status: "accepted",
     title: "Omnivore",
     _id: "5b660afe9c181c0020ed7c5c",
+    filteredSentences: [0, 2],
     matchIdx: 1,
     value:
       "Its different building blocks of today’s science were formed two to three thousand years ago in the ancient Mediterranean region—in a preindustrial age before the dawn of Islam or Christianity, dur- ing a polytheistic, superstitious time. Magic and astrology were considered as legitimate as medicine and astronomy. "
