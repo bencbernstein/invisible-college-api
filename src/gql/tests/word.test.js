@@ -38,13 +38,14 @@ describe("words", () => {
 
   describe("sorting", () => {
     const attrs = ["value", "enrichedPassagesCount"]
+    const startingWith = "n"
 
     attrs.forEach(attr => {
       it(`returns word sorted by ${attr}`, async function() {
         const length = 5
         const query = `
           query {
-            words(first: ${length}, sortBy: "${attr}") {
+            words(first: ${length}, startingWith: "${startingWith}", sortBy: "${attr}") {
               ${attr}
             }
           }
@@ -68,11 +69,12 @@ describe("words", () => {
 
     it("paginates", async function() {
       const length = 5
+      const startingWith = "n"
       const mocks = wordMocks.map(w => w.value).sort()
 
       const query = `
         query {
-          words(first: ${length}, sortBy: "value", after: "${mocks[1]}") {
+          words(first: ${length}, startingWith: "${startingWith}", sortBy: "value") {
             value
           }
         }

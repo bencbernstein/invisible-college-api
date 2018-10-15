@@ -36,6 +36,7 @@ type Passage {
   startIdx: Int
   filteredSentences: [Int]
   endIdx: Int
+  factoidOnCorrect: Boolean
   value: String
   sequence: String
   tagged: [Tagged]

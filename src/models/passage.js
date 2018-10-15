@@ -14,6 +14,7 @@ var passageSchema = new Schema({
   title: String,
   matchIdx: { type: Number, required: true },
   value: { type: String, required: true },
+  factoidOnCorrect: { type: Boolean, required: true, default: false },
   status: {
     type: String,
     enum: STATUSES
