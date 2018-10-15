@@ -286,7 +286,8 @@ const passage = {
     }
   ],
   source: "Wikipedia",
-  status: "accepted",
+  status: "unfiltered",
+  factoidOnCorrect: true,
   filteredSentences: [0, 2],
   title: "Carnivore",
   _id: "5b660afe9c181c0020ed7c2c",
@@ -582,7 +583,8 @@ const secondaryMocks = [
       }
     ],
     source: "Wikipedia",
-    status: "accepted",
+    status: "unfiltered",
+    factoidOnCorrect: true,
     title: "Omnivore",
     _id: "5b660afe9c181c0020ed7c5c",
     filteredSentences: [0, 2],
@@ -856,7 +858,8 @@ const secondaryMocks = [
       }
     ],
     source: "Wikipedia",
-    status: "accepted",
+    status: "unfiltered",
+    factoidOnCorrect: false,
     title: "Herbivore",
     _id: "5b660afe9c181c0020ed7c4c",
     matchIdx: 1,

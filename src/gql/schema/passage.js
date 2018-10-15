@@ -68,6 +68,7 @@ const convert = (data, words, choiceSets) => {
   const { source, title, matchIdx, context } = data
   const _id = mongoose.Types.ObjectId()
   const value = context.join(" ")
+  const factoidOnCorrect = false
   const status = "unfiltered"
   const tagged = flatten(
     context
@@ -80,6 +81,7 @@ const convert = (data, words, choiceSets) => {
     source,
     title,
     matchIdx,
+    factoidOnCorrect,
     value,
     status,
     tagged

@@ -75,7 +75,7 @@ extend type Mutation {
 extend type Query {
   word(id: ID!): Word 
   wordsByValues(values: String): [Word]
-  words(first: Int, sortBy: String, after: String): [Word]
+  words(first: Int, startingWith: String, sortBy: String): [Word]
   wordsToEnrich(attr: String): [Word]
   passagesForWord(value: String): [Passage]
   recommendPassageQueues(type: String!, limit: Int): [String]
@@ -89,17 +89,13 @@ const wordResolvers = {
     },
 
     words(_, params) {
-      const { first, after, sortBy } = params
+      const { first, sortBy, startingWith } = params
       const ascending = sortBy === "value" // Add asc. / desc. option later?
-      const query = {}
+      var value = new RegExp("^" + startingWith)
+      const query = { value }
       const sort = {}
       sort[sortBy] = ascending ? 1 : -1
-      if (after) {
-        query[sortBy] = ascending ? { $gt: after } : { $lt: after }
-      }
-      return WordModel.find(query)
-        .limit(first || 20)
-        .sort(sort)
+      return WordModel.find(query).sort(sort)
     },
 
     async wordsByValues(_, params) {
@@ -114,20 +110,14 @@ const wordResolvers = {
     async wordsToEnrich(_, params) {
       const { attr } = params
       const query = {}
-
       if (attr == "obscurity") {
         query[attr] = { $exists: false }
       } else if (attr !== "all") {
         query[attr] = { $size: 0 }
       }
-
       let words = await WordModel.find(query)
       word = _u.shuffle(words)
-
-      if (attr === "all") {
-        words = words.slice(0, 50)
-      }
-
+      words = words.slice(0, 25)
       return words
     },
 
