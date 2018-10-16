@@ -36,7 +36,7 @@ type Question {
   prompt: [PromptPart]
   answer: [AnswerPart]
   redHerrings: [String]
-  sources: Sources!
+  sources: Sources
 }
 
 extend type Query {

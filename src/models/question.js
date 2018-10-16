@@ -6,12 +6,7 @@ const categories = require("../lib/categories")
 const questionSchema = new Schema({
   TYPE: { type: String, required: true },
   categories: {
-    type: [
-      {
-        type: String,
-        enum: categories
-      }
-    ]
+    type: [String]
   },
   prompt: {
     type: [
