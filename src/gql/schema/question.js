@@ -21,6 +21,7 @@ type Sources {
 type PromptPart {
   value: String
   highlight: Boolean
+  hide: Boolean
   isSentenceConnector: Boolean  
 }
 
@@ -30,13 +31,20 @@ type AnswerPart {
   isSentenceConnector: Boolean
 }
 
+type InteractivePart {
+  value: String
+  correct: Boolean
+}
+
 type Question {
   id: ID
   TYPE: String!
   prompt: [PromptPart]
   answer: [AnswerPart]
   redHerrings: [String]
-  sources: Sources!
+  interactive: [InteractivePart]
+  answerCount: Int
+  sources: Sources
 }
 
 extend type Query {

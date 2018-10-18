@@ -59,7 +59,8 @@ const collections = [
 ]
 
 const TYPES = [
-  "SENTENCE_TO_POS",
+  "PART_OF_SPEECH",
+  "SWAP_LEMMA",
   "SENTENCE_TO_TRUTH",
   "WORD_TO_DEF",
   "WORD_TO_ROOTS",

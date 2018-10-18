@@ -1,5 +1,7 @@
 const mongoose = require("mongoose")
 
+const enrichedPassages = require("./passages_enriched.json")
+
 const passage = {
   _id: mongoose.Types.ObjectId(),
   tagged: [
@@ -870,5 +872,5 @@ const secondaryMocks = [
 
 module.exports = {
   mock: passage,
-  mocks: secondaryMocks.concat(passage)
+  mocks: secondaryMocks.concat(passage).concat(enrichedPassages)
 }

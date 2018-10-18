@@ -1,6 +1,5 @@
 const Busboy = require("busboy")
 const stream = require("stream")
-ObjectId = require("mongodb").ObjectID
 
 const CONFIG = require("../lib/config")
 

@@ -6,19 +6,15 @@ const categories = require("../lib/categories")
 const questionSchema = new Schema({
   TYPE: { type: String, required: true },
   categories: {
-    type: [
-      {
-        type: String,
-        enum: categories
-      }
-    ]
+    type: [String]
   },
   prompt: {
     type: [
       {
         value: String,
         isSentenceConnector: Boolean,
-        highlight: Boolean
+        highlight: Boolean,
+        hide: Boolean
       }
     ]
   },
@@ -29,9 +25,17 @@ const questionSchema = new Schema({
         prefill: Boolean,
         isSentenceConnector: Boolean
       }
-    ],
-    required: true
+    ]
   },
+  interactive: {
+    type: [
+      {
+        value: String,
+        correct: Boolean
+      }
+    ]
+  },
+  answerCount: { type: Number, min: 1 },
   redHerrings: { type: [String], required: true },
   sources: {
     type: {

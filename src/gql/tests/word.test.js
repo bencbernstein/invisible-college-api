@@ -90,7 +90,7 @@ describe("words", () => {
     })
   })
 
-  it("finds a word by its id", async function() {
+  it.only("finds a word by its id", async function() {
     const query = `
       query {
         word (id: "${word._id}") {
@@ -104,6 +104,7 @@ describe("words", () => {
 
     const result = await graphql(schema, query, rootValue, context)
     const found = result.data.word
+    console.log(word._id)
 
     chai.assert.equal(found.id, word._id.toString())
   })
