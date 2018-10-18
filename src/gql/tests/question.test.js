@@ -16,6 +16,7 @@ const fragment = `
   TYPE
   prompt {
     value
+    hide
     highlight
   }
   answer {

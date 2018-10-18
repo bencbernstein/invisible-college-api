@@ -13,7 +13,8 @@ const questionSchema = new Schema({
       {
         value: String,
         isSentenceConnector: Boolean,
-        highlight: Boolean
+        highlight: Boolean,
+        hide: Boolean
       }
     ]
   },
@@ -24,9 +25,17 @@ const questionSchema = new Schema({
         prefill: Boolean,
         isSentenceConnector: Boolean
       }
-    ],
-    required: true
+    ]
   },
+  interactive: {
+    type: [
+      {
+        value: String,
+        correct: Boolean
+      }
+    ]
+  },
+  answerCount: { type: Number, min: 1 },
   redHerrings: { type: [String], required: true },
   sources: {
     type: {
