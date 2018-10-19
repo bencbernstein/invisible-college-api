@@ -14,7 +14,9 @@ const user = {
       textId: ID2,
       sentenceIdx: 350
     }
-  ]
+  ],
+  words: [],
+  passages: []
 }
 
 module.exports = {

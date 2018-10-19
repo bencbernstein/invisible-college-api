@@ -10,6 +10,7 @@ const { seedDb } = require("../../test/helpers")
 
 const text = require("./mocks/text").mock
 const word = require("./mocks/word").mock
+const user = require("./mocks/user").mock
 
 const fragment = `
   id
@@ -29,6 +30,7 @@ const fragment = `
       id
       value
     }
+    
     word {
       id
       value
@@ -36,8 +38,25 @@ const fragment = `
   }
 `
 
+// beforeEach(async () => await seedDb())
+
 describe("questions", () => {
-  beforeEach(async () => await seedDb())
+  it.only("returns questions for a user", async function() {
+    const query = `
+      query {
+        questionsForUser(id: "${user._id}") {
+          ${fragment}
+        }
+      }
+    `
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { questionsForUser } = result.data
+
+    chai.assert(Array.isArray(questionsForUser))
+  })
 
   it("returns questions", async function() {
     const query = `

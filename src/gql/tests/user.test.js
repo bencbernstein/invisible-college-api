@@ -8,6 +8,7 @@ const { seedDb } = require("../../test/helpers")
 const User = require("../../models/user")
 
 const user = require("./mocks/user").mock
+const mocks = require("./mocks/user").mocks
 const text = require("./mocks/text").mock
 
 const notFoundEmail = "wrong@gmail.com"
@@ -17,17 +18,11 @@ const otherEmail = "oliver@gmail.com"
 describe("users", () => {
   beforeEach(async () => await seedDb())
 
-  it("return 1 user with 1 user in the db", async () => {
+  it("returns users", async () => {
     const query = `
       query {
         users {
           id
-          email
-          password
-          bookmarks {
-            textId
-            sentenceIdx
-          }
         }
       }
     `
@@ -38,7 +33,7 @@ describe("users", () => {
     const result = await graphql(schema, query, rootValue, context)
     const { users } = result.data
 
-    chai.assert.equal(users.length, 1)
+    chai.assert.equal(users.length, mocks.length)
   })
 
   it("updates a user", async () => {

@@ -1,23 +1,31 @@
-const _ = require("underscore")
-const pos = require("pos")
+const { flatten } = require("underscore")
 
 require("../../lib/db")()
 
-const QuestionModel = require("../../models/question")
-const QuestionSequenceModel = require("../../models/questionSequence")
-const TextModel = require("../../models/text")
 const WordModel = require("../../models/word")
 const ChoiceSetModel = require("../../models/choiceSet")
-const CONNECTORS = _.flatten(
-  require("../../lib/connectors").map(c => c.elements)
-)
+const QuestionModel = require("../../models/question")
+const QuestionSequenceModel = require("../../models/questionSequence")
 
 const wordQuestions = require("./word/index")
+const { passageQuestions } = require("./sentence/index")
+const onboardingWords = require("../../gql/data/onboardingWords")
 
-const {
-  passageQuestions,
-  additionalPassageQuestions
-} = require("./sentence/index")
+const createWordQuestions = async () => {
+  const docs = await WordModel.find({ _id: onboardingWords })
+
+  return flatten(
+    await Promise.all(docs.map(async doc => await wordQuestions(doc, docs)))
+  )
+}
+
+exports.generate = async () => {
+  const questions = await createWordQuestions()
+  await QuestionModel.create(questions)
+  process.exit(0)
+}
+
+/*
 
 const tag = (value, words, choiceSets) => {
   if (value === undefined) {
@@ -108,14 +116,16 @@ const createTextQuestions = async query => {
   return Promise.all(promises)
 }
 
-exports.generate = async category => {
-  const query = category ? { categories: category } : {}
-  await createTextQuestions(query)
-  console.log("success!!!")
-  process.exit(0)
-}
 
-/*const _ = require("underscore")
+
+
+
+
+
+
+
+
+const _ = require("underscore")
 const pos = require("pos")
 
 require("../../lib/db")()

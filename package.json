@@ -5,13 +5,14 @@
   "license": "MIT",
   "scripts": {
     "start": "nodemon src/index.js",
-    "test": "NODE_ENV=test mocha src/services/tests/sentenceQuestions.test.js --timeout 10000 --exit",
+    "test": "NODE_ENV=test mocha src/gql/tests/question.test.js --timeout 10000 --exit",
     "seed": "node -e 'require(\"./src/test/helpers.js\").seedDb(true)'",
     "generateQuestions": "node -e 'require(\"./src/services/questionGenerators/saveAllToDb.js\").generate(\"Zoology\")'"
   },
   "dependencies": {
     "apollo-server-express": "rc",
     "axios": "^0.18.0",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
     "busboy": "^0.2.14",
     "casual-browserify": "^1.5.19-2",

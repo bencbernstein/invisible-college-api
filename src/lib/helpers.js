@@ -13,3 +13,5 @@ exports.toSentences = passage => {
 
   return sentences
 }
+
+exports.track = (date, idx) => console.log(`${idx}: ${new Date() - date}`)

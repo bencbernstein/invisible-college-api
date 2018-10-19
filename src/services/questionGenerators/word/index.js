@@ -1,4 +1,4 @@
-const _ = require("underscore")
+const { shuffle, union, flatten, extend } = require("underscore")
 
 const wordToDef = require("./wordToDef")
 const wordToRoots = require("./wordToRoots")
@@ -10,50 +10,36 @@ const wordToChars = require("./wordToChars")
 const WordModel = require("../../../models/word")
 
 const TYPES = {
-  WORD_TO_DEF: wordToDef,
-  WORD_TO_ROOTS: wordToRoots,
-  WORD_TO_SYN: wordToSyn,
-  WORD_TO_TAG: wordToTag,
-  WORD_TO_IMG: wordToImg,
-  WORD_TO_CHARS: wordToChars
+  WORD_TO_DEF: { fn: wordToDef, difficulty: 1 },
+  WORD_TO_ROOTS: { fn: wordToRoots, difficulty: 2 },
+  WORD_TO_SYN: { fn: wordToSyn, difficulty: 4 },
+  WORD_TO_TAG: { fn: wordToTag, difficulty: 4 },
+  /*WORD_TO_IMG: {fn: wordToImg, difficulty: },*/
+  WORD_TO_CHARS: { fn: wordToChars, difficulty: 7 }
 }
 
 const getRedHerringDocs = (filterId, docs) => {
   docs = docs.filter(doc => !doc._id.equals(filterId))
-  docs = _.shuffle(docs)
-  return _.union(
+  docs = shuffle(docs)
+  return union(
     docs.filter(doc => doc.isDecomposable).slice(0, 5),
     docs.filter(doc => !doc.isDecomposable).slice(0, 5)
   )
 }
 
-const track = (date, idx) => console.log(`${idx}: ${new Date() - date}`)
-
-module.exports = async (doc, docs, category, TYPE, reverse) => {
+module.exports = async (doc, docs, TYPE) => {
   const redHerringDocs = getRedHerringDocs(doc._id, docs)
+  const word = { id: doc._id, value: doc.value }
+  const sources = { word }
 
-  let questions
-
-  const params = [doc, redHerringDocs, reverse]
-
-  const generate = async TYPE =>
-    _.flatten(await TYPES[TYPE](...params)).map(q =>
-      _.extend({}, q, { TYPE, categories: category })
+  const generate = TYPE =>
+    TYPES[TYPE].fn(doc, redHerringDocs).map(q =>
+      extend(q, { TYPE, sources, difficulty: TYPES[TYPE].difficulty })
     )
 
-  if (TYPE) {
-    questions = await generate(TYPE)
-  } else {
-    questions = _.keys(TYPES).map(generate)
-    questions = _.flatten(await Promise.all(questions))
-    /*console.log(doc.value)
-    track(BEGINNING, 1)
-    console.log(questions.map(q => q.TYPE))
-    console.log("\n")*/
-  }
+  const questions = await (TYPE
+    ? generate(TYPE)
+    : Promise.all(Object.keys(TYPES).map(generate)))
 
-  const word = { id: doc._id, value: doc.value }
-  questions.forEach(q => (q.sources = { word }))
-
-  return questions
+  return flatten(questions)
 }

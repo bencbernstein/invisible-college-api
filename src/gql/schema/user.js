@@ -7,6 +7,25 @@ type Bookmark {
   sentenceIdx: Int!
 }
 
+type WordExperience {
+  id: String!
+  questions: [String]!
+  value: String!
+  seenCount: Int!
+  correctCount: Int!
+  timeSpent: Float!
+  experience: Int!
+}
+
+type PassageExperience {
+  id: String!
+  questions: [String]!
+  source: String!
+  seenCount: Int!
+  correctCount: Int!
+  collected: Boolean
+}
+
 type User {
   firstName: String
   lastName: String
@@ -14,6 +33,13 @@ type User {
   email: String!
   password: String!
   bookmarks: [Bookmark]!
+  level: Int!
+  questionsAnswered: Int!
+  wordsLearned: Int!
+  passagesRead: Int!
+  rank: Int
+  words: [WordExperience]!
+  passages: [PassageExperience]!
 }
 
 type Query {
@@ -39,6 +65,13 @@ type Mutation {
     email: String!
     password: String!
   ): User
+
+  createUser (
+    email: String!
+    password: String!
+    firstName: String!
+    lastName: String!
+  ): User  
 
   removeUser (
     id: ID!
@@ -72,16 +105,27 @@ const userResolvers = {
       return UserModel.create(params)
     },
     async loginUser(_, params) {
-      const users = await UserModel.find({ email: params.email })
-      const user = users[0]
+      const { email, password } = params
+      const user = await UserModel.findOne({ email })
+
       if (user) {
-        if (user.password === params.password) {
+        const result = await user.comparePassword(password)
+        if (result === true) {
           return user
-        } else {
-          throw new Error("Incorrect password.")
         }
+        throw new Error(
+          result === false ? "Incorrect password." : result.message
+        )
       }
+
       throw new Error("Email not found.")
+    },
+    async createUser(_, params) {
+      const user = await UserModel.findOne({ email: params.email })
+      if (user) {
+        throw new Error("Email taken.")
+      }
+      return UserModel.create(params)
     },
     removeUser(_, params) {
       const removed = UserModel.findByIdAndRemove(params.id).exec()

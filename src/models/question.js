@@ -8,6 +8,7 @@ const questionSchema = new Schema({
   categories: {
     type: [String]
   },
+  difficulty: { type: Number, required: true, min: 1 },
   prompt: {
     type: [
       {
