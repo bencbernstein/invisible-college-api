@@ -2,6 +2,7 @@ const { graphql } = require("graphql")
 const chai = require("chai")
 const should = chai.should()
 const expect = chai.expect
+const mongoose = require("mongoose")
 
 const schema = require("./../schema")
 const { seedDb } = require("../../test/helpers")
@@ -169,5 +170,59 @@ describe("users", () => {
     const updated = result.data.saveBookmark
 
     chai.assert.equal(updated.bookmarks.length, 1)
+  })
+
+  it.only("saves questions for a user", async () => {
+    const questions = [
+      {
+        type: "Word",
+        value: "carnivore",
+        id: mongoose.Types.ObjectId(),
+        correct: true
+      },
+      {
+        type: "Word",
+        value: "herbivore",
+        id: user.words[0].id,
+        correct: true
+      },
+      {
+        type: "Passage",
+        value: "About Zoology",
+        id: mongoose.Types.ObjectId(),
+        correct: false
+      }
+    ]
+
+    const encoded = encodeURIComponent(JSON.stringify(questions))
+
+    const query = `
+      mutation {
+        saveQuestionsForUser(id: "${user._id}", questions: "${encoded}") {
+          id
+          words {
+            id
+            correctCount
+            seenCount
+            experience
+          }
+          passages {
+            id
+            correctCount
+            seenCount
+            experience
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { words, passages } = result.data.saveQuestionsForUser
+
+    chai.assert.isNotEmpty(words)
+    chai.assert.isNotEmpty(passages)
   })
 })

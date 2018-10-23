@@ -27,11 +27,9 @@ const userSchema = new Schema({
     type: [
       {
         id: { type: Schema.Types.ObjectId, required: true },
-        questions: { type: [Schema.Types.ObjectId], default: [] },
         value: { type: String, required: true },
         seenCount: { type: Number, required: true, min: 1 },
         correctCount: { type: Number, required: true, min: 0 },
-        timeSpent: { type: Number, required: true, min: 0 },
         experience: { type: Number, required: true, min: 0 }
       }
     ]
@@ -40,11 +38,10 @@ const userSchema = new Schema({
     type: [
       {
         id: { type: Schema.Types.ObjectId, required: true },
-        questions: { type: [Schema.Types.ObjectId], default: [] },
-        source: { type: String, required: true },
+        value: { type: String, required: true },
         seenCount: { type: Number, required: true, min: 1 },
         correctCount: { type: Number, required: true, min: 0 },
-        collected: { type: Boolean, required: true, default: false }
+        experience: { type: Number, required: true, min: 0 }
       }
     ]
   }

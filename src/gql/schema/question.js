@@ -61,6 +61,10 @@ extend type Query {
   questionsForUser(id: ID!): [Question]
   questions(questionType: String, after: String): [Question]
 }
+
+extend type Mutation {
+  saveQuestionsForUser(id: ID!, questions: String!): User
+}
 `
 
 const questionResolvers = {
@@ -106,6 +110,36 @@ const questionResolvers = {
       }
 
       return []
+    }
+  },
+
+  Mutation: {
+    async saveQuestionsForUser(_, params) {
+      const user = await UserModel.findById(params.id)
+      if (!user) {
+        throw new Error("User not found.")
+      }
+
+      const decoded = JSON.parse(decodeURIComponent(params.questions))
+      decoded.forEach(question => {
+        const { id, value, correct, type } = question
+        const correctCount = correct ? 1 : 0
+        const attr = type === "word" ? "words" : "passages"
+        const obj = user[attr].find(o => o.id.equals(id))
+        if (obj) {
+          obj.seenCount++
+          obj.correctCount += correctCount
+          obj.experience += correctCount
+          obj.experience = Math.min(obj.experience, 10)
+        } else {
+          const seenCount = 1
+          const experience = correctCount
+          const newObj = { id, value, seenCount, correctCount, experience }
+          user[attr].push(newObj)
+        }
+      })
+
+      return user.save()
     }
   }
 }

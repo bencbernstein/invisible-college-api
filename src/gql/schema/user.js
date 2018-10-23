@@ -9,21 +9,18 @@ type Bookmark {
 
 type WordExperience {
   id: String!
-  questions: [String]!
   value: String!
   seenCount: Int!
   correctCount: Int!
-  timeSpent: Float!
   experience: Int!
 }
 
 type PassageExperience {
   id: String!
-  questions: [String]!
-  source: String!
+  value: String!
   seenCount: Int!
   correctCount: Int!
-  collected: Boolean
+  experience: Int!
 }
 
 type User {

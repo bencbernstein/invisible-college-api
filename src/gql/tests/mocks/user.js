@@ -15,7 +15,15 @@ const user = {
       sentenceIdx: 350
     }
   ],
-  words: [],
+  words: [
+    {
+      id: mongoose.Types.ObjectId(),
+      value: "herbivore",
+      seenCount: 1,
+      correctCount: 1,
+      experience: 1
+    }
+  ],
   passages: []
 }
 
