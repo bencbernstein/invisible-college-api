@@ -1,4 +1,4 @@
-const _ = require("underscore")
+/*const _ = require("underscore")
 
 const { toSentences } = require("../../../lib/helpers")
 
@@ -28,3 +28,4 @@ module.exports = passage => {
 
   return questions
 }
+*/

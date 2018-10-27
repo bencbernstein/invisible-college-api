@@ -8,5 +8,9 @@ var imageSchema = new Schema({
   words: { type: [String], required: true, default: [] }
 })
 
+imageSchema.methods.base64 = function() {
+  return "data:image/jpg;base64," + this.buf.toString("base64")
+}
+
 const Model = mongoose.model("Image", imageSchema)
 module.exports = Model

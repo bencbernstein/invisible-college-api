@@ -15,6 +15,7 @@ const question = {
       prefill: false
     }
   ],
+  difficulty: 1,
   redHerrings: [
     "a  cloud, often used of large groups of stars",
     "a cell that joins with or marries another cell during fertilization",
@@ -35,6 +36,7 @@ const questions = [
       }
     ],
     answer: [],
+    difficulty: 2,
     redHerrings: ["ker", "gram", "cardi", "anim", "gam", "magn"],
     sources: { word: { id: mongoose.Types.ObjectId(), value: "lion" } }
   },
@@ -53,6 +55,7 @@ const questions = [
         prefill: false
       }
     ],
+    difficulty: 2,
     redHerrings: ["recording", "hospital", "lion", "heart"],
     sources: { word: { id: mongoose.Types.ObjectId(), value: "lion" } }
   }

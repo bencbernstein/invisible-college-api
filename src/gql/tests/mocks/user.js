@@ -14,7 +14,17 @@ const user = {
       textId: ID2,
       sentenceIdx: 350
     }
-  ]
+  ],
+  words: [
+    {
+      id: mongoose.Types.ObjectId(),
+      value: "herbivore",
+      seenCount: 1,
+      correctCount: 1,
+      experience: 1
+    }
+  ],
+  passages: []
 }
 
 module.exports = {

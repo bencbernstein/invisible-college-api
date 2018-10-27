@@ -1,10 +1,29 @@
-const _u = require("underscore")
+const mongoose = require("mongoose")
+const { range } = require("underscore")
+
 const UserModel = require("../../models/user")
+const cache = require("../../cache")
 
 const userTypeDefs = `
 type Bookmark {
   textId: String!
   sentenceIdx: Int!
+}
+
+type WordExperience {
+  id: String!
+  value: String!
+  seenCount: Int!
+  correctCount: Int!
+  experience: Int!
+}
+
+type PassageExperience {
+  id: String!
+  value: String!
+  seenCount: Int!
+  correctCount: Int!
+  experience: Int!
 }
 
 type User {
@@ -14,12 +33,30 @@ type User {
   email: String!
   password: String!
   bookmarks: [Bookmark]!
+  level: Int!
+  questionsAnswered: Int!
+  wordsLearned: Int!
+  passagesRead: Int!
+  rank: Int
+  words: [WordExperience]!
+  passages: [PassageExperience]!
 }
 
 type Query {
   users: [User]
-
   user(id: ID!): User
+}
+
+type Rank {
+  no: Int!
+  id: ID!
+  questionsAnswered: Int!
+  initials: String!
+}
+
+type StatsResult {
+  user: User
+  ranks: [Rank]
 }
 
 type Mutation {
@@ -40,6 +77,13 @@ type Mutation {
     password: String!
   ): User
 
+  createUser (
+    email: String!
+    password: String!
+    firstName: String!
+    lastName: String!
+  ): User  
+
   removeUser (
     id: ID!
   ): User
@@ -49,6 +93,8 @@ type Mutation {
     textId: String!
     sentenceIdx: Int!
   ): User
+
+  getStats(id: ID!): StatsResult 
 }
 
 schema {
@@ -72,24 +118,31 @@ const userResolvers = {
       return UserModel.create(params)
     },
     async loginUser(_, params) {
-      const users = await UserModel.find({ email: params.email })
-      const user = users[0]
+      const { email, password } = params
+      const user = await UserModel.findOne({ email })
+
       if (user) {
-        if (user.password === params.password) {
+        const result = await user.comparePassword(password)
+        if (result === true) {
           return user
-        } else {
-          throw new Error("Incorrect password.")
         }
+        throw new Error(
+          result === false ? "Incorrect password." : result.message
+        )
       }
+
       throw new Error("Email not found.")
     },
-    removeUser(_, params) {
-      const removed = UserModel.findByIdAndRemove(params.id).exec()
-      if (!removed) {
-        throw new Error("Error")
-      }
-      return removed
+    async createUser(_, params) {
+      const user = await UserModel.findOne({ email: params.email })
+      if (user) throw new Error("Email taken.")
+      return UserModel.create(params)
     },
+
+    removeUser(_, params) {
+      return UserModel.findByIdAndRemove(params.id)
+    },
+
     updateUser(_, params) {
       return UserModel.findByIdAndUpdate(
         params.id,
@@ -97,6 +150,7 @@ const userResolvers = {
         { new: true }
       )
     },
+
     async saveBookmark(_, params) {
       const user = await UserModel.findById(params.userId)
       const bookmarks = user.bookmarks
@@ -104,9 +158,8 @@ const userResolvers = {
         textId: params.textId,
         sentenceIdx: parseInt(params.sentenceIdx, 10)
       }
-      const idx = _u.findIndex(
-        bookmarks,
-        b => b.textId.toString() === bookmark.textId
+      const idx = bookmarks.findIndex(
+        ({ textId }) => textId.toString() === bookmark.textId
       )
       if (idx > -1) {
         bookmarks[idx] = bookmark
@@ -115,6 +168,53 @@ const userResolvers = {
       }
       user.save()
       return user
+    },
+
+    async getStats(_, params) {
+      const id = params.id
+      const user = await UserModel.findById(id)
+      if (!user) throw new Error("User not found.")
+
+      const { words, passages } = user
+      user.wordsLearned = words.length
+      user.passagesRead = passages.length
+      user.questionsAnswered = words
+        .concat(passages)
+        .map(({ seenCount }) => seenCount)
+        .reduce((a, b) => a + b, 0)
+
+      await user.save()
+
+      const LEADERBOARD = "all_time_leaderboard"
+      await cache.del(LEADERBOARD)
+      await cache.zadd([LEADERBOARD, user.questionsAnswered, id])
+
+      let lower, upper
+
+      return cache
+        .zrevrankAsync([LEADERBOARD, id])
+        .then(rank => {
+          lower = Math.max(0, rank - 2)
+          upper = rank + 2
+          return [lower, upper]
+        })
+        .then(params => cache.zrevrangeAsync([LEADERBOARD, ...params]))
+        .then(async ranks => {
+          ranks = range(lower, upper + 1)
+            .map((no, idx) => ({ no: no + 1, id: ranks[idx] }))
+            .filter(({ id }) => id)
+
+          const _id = { $in: ranks.map(r => r.id).map(mongoose.Types.ObjectId) }
+          const users = await UserModel.find({ _id })
+
+          ranks.forEach(rank => {
+            const user = users.find(user => user._id.equals(rank.id))
+            rank.initials = user.initials()
+            rank.questionsAnswered = user.questionsAnswered
+          })
+
+          return { user, ranks }
+        })
     }
   }
 }

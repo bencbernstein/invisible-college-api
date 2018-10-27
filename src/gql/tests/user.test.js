@@ -2,12 +2,14 @@ const { graphql } = require("graphql")
 const chai = require("chai")
 const should = chai.should()
 const expect = chai.expect
+const mongoose = require("mongoose")
 
 const schema = require("./../schema")
 const { seedDb } = require("../../test/helpers")
 const User = require("../../models/user")
 
 const user = require("./mocks/user").mock
+const mocks = require("./mocks/user").mocks
 const text = require("./mocks/text").mock
 
 const notFoundEmail = "wrong@gmail.com"
@@ -17,17 +19,11 @@ const otherEmail = "oliver@gmail.com"
 describe("users", () => {
   beforeEach(async () => await seedDb())
 
-  it("return 1 user with 1 user in the db", async () => {
+  it("returns users", async () => {
     const query = `
       query {
         users {
           id
-          email
-          password
-          bookmarks {
-            textId
-            sentenceIdx
-          }
         }
       }
     `
@@ -38,7 +34,7 @@ describe("users", () => {
     const result = await graphql(schema, query, rootValue, context)
     const { users } = result.data
 
-    chai.assert.equal(users.length, 1)
+    chai.assert.equal(users.length, mocks.length)
   })
 
   it("updates a user", async () => {
@@ -174,5 +170,91 @@ describe("users", () => {
     const updated = result.data.saveBookmark
 
     chai.assert.equal(updated.bookmarks.length, 1)
+  })
+
+  it("saves questions for a user", async () => {
+    const questions = [
+      {
+        type: "Word",
+        value: "carnivore",
+        id: mongoose.Types.ObjectId(),
+        correct: true
+      },
+      {
+        type: "Word",
+        value: "herbivore",
+        id: user.words[0].id,
+        correct: true
+      },
+      {
+        type: "Passage",
+        value: "About Zoology",
+        id: mongoose.Types.ObjectId(),
+        correct: false
+      }
+    ]
+
+    const encoded = encodeURIComponent(JSON.stringify(questions))
+
+    const query = `
+      mutation {
+        saveQuestionsForUser(id: "${user._id}", questions: "${encoded}") {
+          id
+          words {
+            id
+            correctCount
+            seenCount
+            experience
+          }
+          passages {
+            id
+            correctCount
+            seenCount
+            experience
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { words, passages } = result.data.saveQuestionsForUser
+
+    chai.assert.isNotEmpty(words)
+    chai.assert.isNotEmpty(passages)
+  })
+
+  it.only("gets stats for for a user", async () => {
+    const query = `
+      mutation {
+        getStats(id: "${user._id}") {
+          user {
+            id
+            wordsLearned
+            passagesRead
+            questionsAnswered  
+          }
+          ranks {
+            id
+            no
+            questionsAnswered
+            initials
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { getStats } = result.data
+
+    chai.assert.equal(getStats.user.wordsLearned, user.words.length)
+    chai.assert.equal(getStats.user.passagesRead, user.passages.length)
+    chai.assert.isArray(getStats.ranks)
+    chai.assert.isNotEmpty(getStats.ranks)
   })
 })

@@ -1,4 +1,4 @@
-const { toSentences } = require("../../../lib/helpers")
+/*const { toSentences } = require("../../../lib/helpers")
 
 module.exports = passage => {
   const sentences = toSentences(passage)
@@ -14,3 +14,4 @@ module.exports = passage => {
 
   return { answer }
 }
+*/

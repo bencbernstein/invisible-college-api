@@ -1,45 +1,83 @@
-// const _ = require("underscore")
+const PartialSentenceModel = require("../../../models/partialSentence")
+const WordModel = require("../../../models/word")
 
-// const locateConnectors = passage =>
-//   _.compact(
-//     _.flatten(
-//       passage.tagged.map((sentence, idx) =>
-//         sentence.map(
-//           (word, idx2) => word.isConnector && [word.value, idx, idx2]
-//         )
-//       ),
-//       1
-//     )
-//   )
+const { isPunc, condensePrompt } = require("../../../lib/helpers")
 
-// const BLANK = [{ value: "_underline_" }, { value: ".", isPunctuation: true }]
+const makeQuestion = len => len >= 6 && len <= 12
 
-// module.exports = passage => {
-//   const data = _.sample(locateConnectors(passage))
+const createPartialSentence = (tagged, start, len) =>
+  JSON.parse(JSON.stringify(tagged))
+    .splice(start, len)
+    .map(t => (isPunc(t.value) ? t.value : ` ${t.value}`))
+    .join("")
+    .trim()
 
-//   if (!data) {
-//     return
-//   }
+module.exports = async (
+  passage,
+  passages,
+  sources,
+  generatePartialSentences = false
+) => {
+  const questions = []
+  const partialSentences = []
+  const { tagged, id } = passage
+  const TYPE = "Complete the Sentence"
+  let len = 0
 
-//   const [connector, sentenceIdx, wordIdx] = data
+  for (const [idx, tag] of tagged.entries()) {
+    const { isPunctuation, isConnector, isSentenceConnecter } = tag
 
-//   let params = {}
+    if (tag.value === ".") {
+      len = 0
+    } else {
+      if (isConnector) {
+        const connector = tag.value
+        const lenUntilEnd = tagged.slice(idx).findIndex(t => t.value === ".")
 
-//   const tagged = _.map(passage.tagged, _.clone)
+        const createQuestion = async (position, startIdx, len) => {
+          const value = createPartialSentence(tagged, startIdx, len)
+          const partialSentence = { passage: id, connector, value, position }
 
-//   const value = tagged[sentenceIdx]
-//     .splice(wordIdx)
-//     .map(a => a.value)
-//     .join(" ")
+          if (generatePartialSentences) {
+            partialSentences.push(partialSentence)
+            return
+          }
 
-//   tagged[sentenceIdx][wordIdx] = { highlight: true, value }
+          const copy = JSON.parse(JSON.stringify(tagged)).map(({ value }) => ({
+            value
+          }))
+          copy.splice(idx - len, len, { value, hide: true })
+          const answer = [{ value, prefill: false }]
+          const prompt = condensePrompt(copy)
+          const query = { connector, position, passage: { $ne: id } }
+          const redHerrings = (await PartialSentenceModel.find(query).limit(
+            3
+          )).map(p => p.value)
 
-//   params.answer = _.flatten(tagged).map(p => ({
-//     value: p.value,
-//     prefill: !p.highlight
-//   }))
+          if (redHerrings.length === 3) {
+            questions.push({ TYPE, answer, prompt, redHerrings, sources })
+          }
 
-//   params.redHerrings = ["not this", "or this", "and this"]
+          return
+        }
 
-//   return params
-// }
+        if (makeQuestion(len)) {
+          await createQuestion("start", idx - len, len)
+        }
+
+        if (makeQuestion(lenUntilEnd)) {
+          await createQuestion("end", idx, lenUntilEnd + 1)
+        }
+      }
+
+      len += 1
+    }
+  }
+
+  if (generatePartialSentences) {
+    const results = await PartialSentenceModel.create(partialSentences)
+    console.log(`Created ${results.length} partial sentences for ${id}.`)
+  } else {
+    return questions
+  }
+}
