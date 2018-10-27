@@ -74,5 +74,12 @@ userSchema.methods.comparePassword = function(candidatePassword, cb) {
   return bcrypt.compare(candidatePassword, this.password)
 }
 
+userSchema.methods.initials = function() {
+  return (
+    this.firstName.charAt(0).toUpperCase() +
+    this.lastName.charAt(0).toUpperCase()
+  )
+}
+
 const Model = mongoose.model("User", userSchema)
 module.exports = Model

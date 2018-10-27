@@ -1,4 +1,4 @@
-const _ = require("underscore")
+/*const _ = require("underscore")
 const TextModel = require("../../../models/text")
 
 const ATTRS = ["date", "source", "name", "author"]
@@ -26,3 +26,4 @@ const question = async (passage, attr, passages) => {
 
 module.exports = async (passage, passages) =>
   Promise.all(ATTRS.map(a => question(passage, a, passages)))
+*/

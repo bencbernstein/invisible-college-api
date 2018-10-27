@@ -1,9 +1,11 @@
-const { sample } = require("underscore")
+const { sample, uniq, omit, shuffle } = require("underscore")
 const mongoose = require("mongoose")
 
 const QuestionModel = require("../../models/question")
 const WordModel = require("../../models/word")
+const ImageModel = require("../../models/image")
 const TextModel = require("../../models/text")
+const PassageModel = require("../../models/passage")
 const UserModel = require("../../models/user")
 
 const {
@@ -11,17 +13,19 @@ const {
 } = require("../../services/questionGenerators/word/index")
 const generateQuestionsForText = require("../../services/questionGenerators/sentence/index")
 
-const onboardingWords = require("../data/onboardingWords")
+const onboardingWords = require("../data/onboardingWords").map(
+  mongoose.Types.ObjectId
+)
 
 const questionTypeDefs = `
 type Source {
-  value: String
-  id: String
+  id: String!
+  value: String!
 }
 
 type Sources {
   word: Source
-  text: Source
+  passage: Source
 }
 
 type PromptPart {
@@ -43,23 +47,35 @@ type InteractivePart {
 }
 
 type Question {
-  id: ID
+  id: ID!
   TYPE: String!
   prompt: [PromptPart]
   answer: [AnswerPart]
   redHerrings: [String]
+  passageOrWord: String!
   interactive: [InteractivePart]
   answerCount: Int
-  sources: Sources
+  sources: Sources!
   experience: Int
+}
+
+type ImageOnCorrect {
+  base64: String
+}
+
+type QuestionTypeCount {
+  type: String!
+  count: Int!
 }
 
 extend type Query {
   question(id: ID!): Question
   questionsForWord(id: ID!): [Question]
   questionsForText(id: ID!): [Question]
-  questionsForUser(id: ID!): [Question]
   questions(questionType: String, after: String): [Question]
+  questionsForUser(id: ID!): String!
+  questionsForType(type: String!): String!
+  questionTypeCounts: [QuestionTypeCount]
 }
 
 extend type Mutation {
@@ -90,35 +106,79 @@ const questionResolvers = {
       return wordQuestions(params.id)
     },
 
+    async questionTypeCounts(_, params) {
+      const questions = (await QuestionModel.find({}, { _id: 0, TYPE: 1 })).map(
+        ({ TYPE }) => TYPE
+      )
+      return uniq(questions).map(type => ({
+        type,
+        count: questions.filter(TYPE => TYPE === type).length
+      }))
+    },
+
     async questionsForText(_, params) {
       const questions = await generateQuestionsForText(params.id)
       return questions
     },
 
+    async questionsForType(_, params) {
+      const TYPE = decodeURI(params.type)
+      const questions = await QuestionModel.aggregate([
+        { $match: { TYPE } },
+        { $sample: { size: 5 } }
+      ])
+      return JSON.stringify(questions)
+    },
+
     async questionsForUser(_, params) {
       const attrs = { words: 1, passages: 1, _id: 0 }
-      const user = await UserModel.findOne({}, attrs) // UserModel.findById(params.id)
-      if (user) {
-        if (user.words.length === 0) {
-          // const ids = sample(onboardingWords, 5).map(mongoose.Types.ObjectId)
-          // const question = await QuestionModel.find({
-          //   "sources.word.id": { $in: ids }
-          // })
-          const questions = await unseenWordQuestions(user.words, 5)
-          return questions
+      const user = await UserModel.findById(params.id)
+      if (!user) throw new Error("User not found.")
+
+      const seenWords = onboardingWords.slice(0, 5)
+      // sample(uniq(onboardingWords), 5) concat user words
+
+      let questions = await QuestionModel.find({
+        "sources.word.id": { $in: seenWords },
+        difficulty: { $lt: 3 }
+      })
+      questions = uniq(questions, q => q.sources.word.value)
+      // questions = uniq(shuffle(questions), q => q.sources.word.value)
+
+      const words = await WordModel.find({ _id: { $in: seenWords } })
+
+      const gameElements = []
+
+      for (const [idx, question] of questions.entries()) {
+        gameElements.push(question)
+        const word = words.find(w => w._id.equals(question.sources.word.id))
+
+        const daisyChain = await word.daisyChain()
+        if (daisyChain) {
+          gameElements.push(daisyChain)
+        }
+
+        const images = await word.imageDocs()
+        if (images.length) {
+          const image = sample(images)
+          gameElements.push({ base64: image.base64() })
+        }
+
+        const passages = await word.passageDocs("enriched")
+        if (passages.length) {
+          const passage = sample(passages)
+          gameElements.push({ title: passage.title, value: passage.rawValue() })
         }
       }
 
-      return []
+      return JSON.stringify(gameElements)
     }
   },
 
   Mutation: {
     async saveQuestionsForUser(_, params) {
       const user = await UserModel.findById(params.id)
-      if (!user) {
-        throw new Error("User not found.")
-      }
+      if (!user) throw new Error("User not found.")
 
       const decoded = JSON.parse(decodeURIComponent(params.questions))
       decoded.forEach(question => {

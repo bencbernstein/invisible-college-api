@@ -1,8 +1,10 @@
-const _ = require("underscore")
+const { find, extend, sample } = require("underscore")
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
 const ImageModel = require("./image")
+const QuestionModel = require("./question")
+const PassageModel = require("./passage")
 const categories = require("../lib/categories")
 
 var wordSchema = new Schema({
@@ -56,11 +58,39 @@ var wordSchema = new Schema({
   unfilteredPassagesCount: { type: Number, required: true, default: 0 },
   rejectedPassagesCount: { type: Number, required: true, default: 0 },
   acceptedPassagesCount: { type: Number, required: true, default: 0 },
-  enrichedPassagesCount: { type: Number, required: true, default: 0 }
+  enrichedPassagesCount: { type: Number, required: true, default: 0 },
+  sharesRoot: [Schema.Types.ObjectId]
 })
 
 wordSchema.methods.simpleDefinition = function() {
   return this.definition.map(d => d.value).join("")
+}
+
+wordSchema.methods.daisyChain = function() {
+  if (this.sharesRoot.length) {
+    return QuestionModel.findOne({
+      "sources.word.id": { $in: this.sharesRoot },
+      difficulty: { $lt: 3 }
+    })
+  }
+}
+
+wordSchema.methods.imageDocs = function() {
+  if (this.images.length === 0) {
+    return []
+  }
+  return ImageModel.find({ _id: { $in: this.images } })
+}
+
+wordSchema.methods.passageDocs = function(status) {
+  if (this.passages === 0) {
+    return []
+  }
+  const query = { _id: { $in: this.passages } }
+  if (status) {
+    query.status = status
+  }
+  return PassageModel.find(query)
 }
 
 wordSchema.methods.highlightedDefinition = function() {
@@ -91,8 +121,8 @@ wordSchema.statics.redHerring = async function(doc) {
   }
 
   if (doc.isDecomposable) {
-    const rootValue = _.find(doc.components, c => c.isRoot).value
-    const rootQuery = _.extend({}, basicQuery, {
+    const rootValue = find(doc.components, c => c.isRoot).value
+    const rootQuery = extend({}, basicQuery, {
       components: { $elemMatch: { value: rootValue, isRoot: true } }
     })
     const redHerrings = await this.find(rootQuery).limit(5)

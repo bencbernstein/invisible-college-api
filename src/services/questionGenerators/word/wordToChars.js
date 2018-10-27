@@ -1,57 +1,60 @@
-const _ = require("underscore")
+const { sample, without, flatten, contains, extend } = require("underscore")
 
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz"
   .split("")
   .map(c => c.toUpperCase())
 
-const question = (doc, redHerringDocs, type) => {
+const question = (doc, redHerringDocs, oneRoot, allChars, TYPE) => {
   const prompt = doc.highlightedDefinition()
 
   const indices = doc.rootIndices()
-  const prefillIndices = type === "oneRoot" ? [_.sample(indices)] : indices
+  const prefillIndices = oneRoot ? [sample(indices)] : indices
 
-  const answer =
-    type === "allChars"
-      ? doc.value
-          .toUpperCase()
-          .split("")
-          .map(value => ({ prefill: false, value }))
-      : _.flatten(
-          doc.components.map((c, idx) =>
-            c.value
-              .toUpperCase()
-              .split("")
-              .map(value => ({
-                prefill: !_.contains(prefillIndices, idx),
-                value
-              }))
-          )
+  const answer = allChars
+    ? doc.value
+        .toUpperCase()
+        .split("")
+        .map(value => ({ prefill: false, value }))
+    : flatten(
+        doc.components.map((c, idx) =>
+          c.value
+            .toUpperCase()
+            .split("")
+            .map(value => ({
+              prefill: !contains(prefillIndices, idx),
+              value
+            }))
         )
+      )
 
   const answerValues = answer.filter(a => !a.prefill).map(a => a.value)
 
-  const redHerrings = _.sample(
-    _.without(ALPHABET, ...[answerValues]),
+  const redHerrings = sample(
+    without(ALPHABET, ...[answerValues]),
     12 - answerValues.length
   )
 
-  return { prompt, answer, redHerrings }
+  return { TYPE, prompt, answer, redHerrings }
 }
 
-module.exports = (doc, redHerringDocs) => {
+module.exports = (doc, redHerringDocs, sources, difficulty) => {
   const questions = []
 
   if (doc.value.length < 10) {
-    questions.push(question(doc, redHerringDocs, "allChars"))
+    questions.push(question(doc, redHerringDocs, false, true, "Word to Chars"))
   }
 
   if (doc.isDecomposable) {
-    questions.push(question(doc, redHerringDocs, "oneRoot"))
+    questions.push(
+      question(doc, redHerringDocs, false, false, "Word to Chars (roots)")
+    )
+
+    if (doc.hasMultipleRoots()) {
+      questions.push(
+        question(doc, redHerringDocs, true, false, "Word to Chars (one root)")
+      )
+    }
   }
 
-  if (doc.hasMultipleRoots()) {
-    questions.push(question(doc, redHerringDocs, "allRoots"))
-  }
-
-  return questions
+  return questions.map(q => extend(q, { sources, difficulty }))
 }

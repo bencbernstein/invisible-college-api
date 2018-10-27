@@ -5,10 +5,11 @@ const categories = require("../lib/categories")
 
 const questionSchema = new Schema({
   TYPE: { type: String, required: true },
+  passageOrWord: { type: String, enum: ["passage", "word"], required: true },
   categories: {
     type: [String]
   },
-  difficulty: { type: Number, required: true, min: 1 },
+  difficulty: { type: Number, required: true, default: 1, min: 1 },
   prompt: {
     type: [
       {

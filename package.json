@@ -7,12 +7,13 @@
     "start": "nodemon src/index.js",
     "test": "NODE_ENV=test mocha src/gql/tests/user.test.js --timeout 10000 --exit",
     "seed": "node -e 'require(\"./src/test/helpers.js\").seedDb(true)'",
-    "generateQuestions": "node -e 'require(\"./src/services/questionGenerators/saveAllToDb.js\").generate(\"Zoology\")'"
+    "generateQuestions": "node -e 'require(\"./src/services/questionGenerators/saveAllToDb.js\").generate()'"
   },
   "dependencies": {
     "apollo-server-express": "rc",
     "axios": "^0.18.0",
     "bcryptjs": "^2.4.3",
+    "bluebird": "^3.5.2",
     "body-parser": "^1.18.3",
     "busboy": "^0.2.14",
     "casual-browserify": "^1.5.19-2",
@@ -29,6 +30,7 @@
     "natural": "^0.6.1",
     "nodemon": "^1.18.1",
     "pos": "^0.4.2",
+    "redis": "^2.8.0",
     "underscore": "^1.9.1"
   },
   "engines": {

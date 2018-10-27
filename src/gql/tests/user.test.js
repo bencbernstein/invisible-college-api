@@ -172,7 +172,7 @@ describe("users", () => {
     chai.assert.equal(updated.bookmarks.length, 1)
   })
 
-  it.only("saves questions for a user", async () => {
+  it("saves questions for a user", async () => {
     const questions = [
       {
         type: "Word",
@@ -224,5 +224,37 @@ describe("users", () => {
 
     chai.assert.isNotEmpty(words)
     chai.assert.isNotEmpty(passages)
+  })
+
+  it.only("gets stats for for a user", async () => {
+    const query = `
+      mutation {
+        getStats(id: "${user._id}") {
+          user {
+            id
+            wordsLearned
+            passagesRead
+            questionsAnswered  
+          }
+          ranks {
+            id
+            no
+            questionsAnswered
+            initials
+          }
+        }
+      }
+    `
+
+    const rootValue = {}
+    const context = {}
+
+    const result = await graphql(schema, query, rootValue, context)
+    const { getStats } = result.data
+
+    chai.assert.equal(getStats.user.wordsLearned, user.words.length)
+    chai.assert.equal(getStats.user.passagesRead, user.passages.length)
+    chai.assert.isArray(getStats.ranks)
+    chai.assert.isNotEmpty(getStats.ranks)
   })
 })
