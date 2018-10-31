@@ -1,3 +1,5 @@
+const { sample, uniq } = require("lodash")
+
 const toSentences = passage => {
   const sentences = [[]]
   let idx = 0
@@ -54,11 +56,26 @@ const indicesInString = (source, find) => {
   return result
 }
 
+const qForExp = (pool, user, ids) => {
+  const questions = []
+  for (const id of ids) {
+    const selection = pool.filter(q => q.sources.word.id.equals(id))
+    const difficulties = selection.map(s => s.difficulty)
+    const word = user.words.find(word => word.id.equals(id))
+    const difficulty = word
+      ? Math.max(...difficulties.filter(d => d <= word.experience))
+      : Math.min(...difficulties)
+    questions.push(sample(selection.filter(s => s.difficulty === difficulty)))
+  }
+  return questions
+}
+
 module.exports = {
   isPunc,
   toSentences,
   track,
   condensePrompt,
   condenseInteractive,
-  indicesInString
+  indicesInString,
+  qForExp
 }

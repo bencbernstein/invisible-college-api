@@ -1,10 +1,10 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
-const { find, flatten } = require("underscore")
+const { find, flatten, uniq, shuffle, sample } = require("underscore")
 
 const STATUSES = ["unfiltered", "accepted", "rejected", "enriched"]
 
-const isPunc = require("../lib/helpers")
+const { isPunc } = require("../lib/helpers")
 
 const SUB_CONJ = find(
   require("../lib/connectors"),
@@ -14,6 +14,7 @@ const SUB_CONJ = find(
 var passageSchema = new Schema({
   source: String,
   title: String,
+  difficulty: { type: Number, min: 1, max: 10 },
   matchIdx: { type: Number, required: true },
   value: { type: String, required: true },
   factoidOnCorrect: { type: Boolean, required: true, default: false },
@@ -22,6 +23,7 @@ var passageSchema = new Schema({
     enum: STATUSES
   },
   filteredSentences: { type: [Number], required: true, default: [] },
+  filteredWords: { type: [Schema.Types.ObjectId], required: true, default: [] },
   tagged: {
     type: [
       {
@@ -44,13 +46,25 @@ passageSchema.methods.connectorCount = function() {
   return this.tagged.filter(t => SUB_CONJ.indexOf(t.value) > -1).length
 }
 
+passageSchema.methods.wordIds = function() {
+  const { tagged } = this.questionData()
+  return uniq(tagged.map(({ wordId }) => wordId).map(id => id))
+}
+
+passageSchema.methods.wordCount = function() {
+  const { tagged } = this.questionData()
+  return tagged.length
+}
+
 const makeQuestionFor = (word, isFocusWord = true) =>
   word.isFocusWord || ((word.wordId || word.choiceSetId) && !word.isUnfocused)
 
-const toSentences = tags => {
+const toSentences = tags => {}
+
+passageSchema.methods.filtered = function() {
   const sentences = [[]]
   let senIdx = 0
-  tags.forEach(tag => {
+  this.tagged.forEach(tag => {
     if (tag.isSentenceConnector) {
       senIdx += 1
       sentences.push([])
@@ -58,18 +72,15 @@ const toSentences = tags => {
       sentences[senIdx].push(tag)
     }
   })
-  return sentences
+  return flatten(
+    sentences.filter((s, idx) => this.filteredSentences.includes(idx))
+  )
 }
 
 passageSchema.methods.questionData = function() {
   const id = this._id
 
-  const tagged = flatten(
-    toSentences(this.tagged).filter((s, idx) =>
-      this.filteredSentences.includes(idx)
-    )
-  )
-
+  const tagged = this.filtered()
   const focusWordIndices = tagged
     .map((word, i) => (makeQuestionFor(word) ? i : -1))
     .filter(i => i > -1)
@@ -78,12 +89,24 @@ passageSchema.methods.questionData = function() {
 }
 
 passageSchema.methods.rawValue = function() {
-  return flatten(
-    this.toSentences()
-      .map(({ value }) => value)
-      .filter(v => v)
-      .reduce((prev, curr) => [prev, isPunc(curr) ? "" : " ", curr])
-  ).join("")
+  return this.filtered()
+    .map(({ value }) => (isPunc(value) ? value : ` ${value}`))
+    .join("")
+}
+
+passageSchema.statics.sourcesForNextUnseen = async function(user) {
+  const userPassageIds = user.passages.map(p => p.id)
+  const userWordIds = user.words.map(w => w.id)
+
+  const passage = await this.findOne({
+    _id: { $nin: userPassageIds },
+    status: "enriched",
+    filteredWords: { $not: { $size: 0 } }
+  }).sort("difficulty")
+
+  const wordIds = shuffle(passage.filteredWords.concat(sample(userWordIds, 2)))
+
+  return { id: passage._id, wordIds }
 }
 
 exports.track = (date, idx) => console.log(`${idx}: ${new Date() - date}`)

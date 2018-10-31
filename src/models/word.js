@@ -52,7 +52,7 @@ var wordSchema = new Schema({
     },
     default: {}
   },
-  obscurity: Number,
+  obscurity: { type: Number, required: true, default: 3 },
   images: { type: [Schema.Types.ObjectId], required: true, default: [] },
   passages: { type: [Schema.Types.ObjectId], required: true, default: [] },
   unfilteredPassagesCount: { type: Number, required: true, default: 0 },

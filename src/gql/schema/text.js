@@ -36,6 +36,8 @@ type Passage {
   startIdx: Int
   filteredSentences: [Int]
   endIdx: Int
+  difficulty: Int
+  filteredWords: [ID]
   factoidOnCorrect: Boolean
   value: String
   sequence: String

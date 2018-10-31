@@ -4,7 +4,7 @@ const ALPHABET = "abcdefghijklmnopqrstuvwxyz"
   .split("")
   .map(c => c.toUpperCase())
 
-const question = (doc, redHerringDocs, oneRoot, allChars, TYPE) => {
+const question = (doc, redHerringDocs, oneRoot, allChars, TYPE, difficulty) => {
   const prompt = doc.highlightedDefinition()
 
   const indices = doc.rootIndices()
@@ -34,27 +34,27 @@ const question = (doc, redHerringDocs, oneRoot, allChars, TYPE) => {
     12 - answerValues.length
   )
 
-  return { TYPE, prompt, answer, redHerrings }
+  return { TYPE, prompt, answer, redHerrings, difficulty }
 }
 
-module.exports = (doc, redHerringDocs, sources, difficulty) => {
+module.exports = (doc, redHerringDocs, sources, daisyChain) => {
   const questions = []
+  let name
 
   if (doc.value.length < 10) {
-    questions.push(question(doc, redHerringDocs, false, true, "Word to Chars"))
+    name = "Word to Chars"
+    questions.push(question(doc, redHerringDocs, false, true, name, 7))
   }
 
   if (doc.isDecomposable) {
-    questions.push(
-      question(doc, redHerringDocs, false, false, "Word to Chars (roots)")
-    )
+    name = "Word to Chars (roots)"
+    questions.push(question(doc, redHerringDocs, false, false, name, 6))
 
     if (doc.hasMultipleRoots()) {
-      questions.push(
-        question(doc, redHerringDocs, true, false, "Word to Chars (one root)")
-      )
+      name = "Word to Chars (one root)"
+      questions.push(question(doc, redHerringDocs, true, false, name, 5))
     }
   }
 
-  return questions.map(q => extend(q, { sources, difficulty }))
+  return questions.map(q => extend(q, { sources, daisyChain }))
 }
