@@ -186,7 +186,6 @@ const userResolvers = {
       await user.save()
 
       const LEADERBOARD = "all_time_leaderboard"
-      await cache.del(LEADERBOARD)
       await cache.zadd([LEADERBOARD, user.questionsAnswered, id])
 
       let lower, upper
