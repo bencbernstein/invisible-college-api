@@ -38,6 +38,8 @@ const userSchema = new Schema({
     type: [
       {
         id: { type: Schema.Types.ObjectId, required: true },
+        seenCount: { type: Number, required: true, min: 1 },
+        correctCount: { type: Number, required: true, min: 0 },
         experience: { type: Number, required: true, min: 0, default: 0 }
       }
     ]

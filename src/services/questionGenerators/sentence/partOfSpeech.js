@@ -3,22 +3,31 @@ const { sample, without, values, find, range } = require("underscore")
 const { condensePrompt, condenseInteractive } = require("../../../lib/helpers")
 
 const PART_OF_SPEECH = {
-  PRP: "personal pronoun",
-  VBD: "verb, past tense",
-  JJ: "adjective",
-  NN: "noun",
-  NNS: "noun, plural",
-  VB: "verb, base form",
-  VBN: "verb, past participle",
-  IN: "preposition or subordinating conjunction",
-  DT: "determiner",
-  JJS: "adjective, superlative",
-  NNP: "proper noun, singular",
-  POS: "possessive ending",
-  NNPS: "proper noun, plural",
-  RB: "adverb",
-  CC: "coordinating conjunction",
-  MD: "modal"
+  PRP: { singular: "personal pronoun", plural: "personal pronouns" },
+  VBD: { singular: "verb, past tense", plural: "verbs, past tense" },
+  JJ: { singular: "adjective", plural: "adjectives" },
+  NN: { singular: "noun", plural: "nouns" },
+  NNS: { singular: "noun, plural", plural: "nouns, plural" },
+  VB: { singular: "verb, base form", plural: "verbs, base form" },
+  VBN: { singular: "verb, past participle", plural: "verbs, past participle" },
+  IN: {
+    singular: "preposition or subordinating conjunction",
+    plural: "preposition or subordinating conjunctions"
+  },
+  DT: { singular: "determiner", plural: "determiners" },
+  JJS: {
+    singular: "adjective, superlative",
+    plural: "adjectives, superlative"
+  },
+  NNP: { singular: "proper noun, singular", plural: "proper nouns, singular" },
+  POS: { singular: "possessive ending", plural: "possessive endings" },
+  NNPS: { singular: "proper noun, plural", plural: "proper nouns, plural" },
+  RB: { singular: "adverb", plural: "adverbs" },
+  CC: {
+    singular: "coordinating conjunctions",
+    plural: "coordinating conjunctions"
+  },
+  MD: "modals"
 }
 
 const regular = (passage, sources) => {
@@ -59,9 +68,10 @@ const reversed = (passage, sources) => {
   const posCount = tagged.filter(correct).length
   const answerCount = sample(range(1, Math.min(3, posCount) + 1))
 
-  const prompt = [
-    { value: `Find ${answerCount} - ${PART_OF_SPEECH[pos]}`, highlight: false }
-  ]
+  const value = `Find ${answerCount} - ${
+    PART_OF_SPEECH[pos][answerCount === 1 ? "singular" : "plural"]
+  }`
+  const prompt = [{ value, highlight: false }]
 
   const interactive = condenseInteractive(
     tagged.map(t => ({
@@ -73,4 +83,5 @@ const reversed = (passage, sources) => {
   return [{ TYPE, prompt, interactive, answerCount, sources }]
 }
 
-module.exports = (passage, passages, sources) => reversed(passage, sources) // regular(passage, sources).concat(reversed(passage, sources))
+module.exports = (passage, passages, sources) =>
+  regular(passage, sources).concat(reversed(passage, sources))

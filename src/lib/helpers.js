@@ -60,10 +60,13 @@ const qForExp = (pool, user, ids) => {
   const questions = []
   for (const id of ids) {
     const selection = pool.filter(q => q.sources.word.id.equals(id))
+    if (selection.length === 0) {
+      continue
+    }
     const difficulties = selection.map(s => s.difficulty)
     const word = user.words.find(word => word.id.equals(id))
     const difficulty = word
-      ? Math.max(...difficulties.filter(d => d <= word.experience))
+      ? Math.max(...difficulties.filter(d => d <= Math.max(1, word.experience)))
       : Math.min(...difficulties)
     questions.push(sample(selection.filter(s => s.difficulty === difficulty)))
   }

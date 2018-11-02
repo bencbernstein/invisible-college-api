@@ -113,8 +113,8 @@ questionSchema.methods.passageOnCorrect = async function() {
 
 questionSchema.statics.createDaisyChain = async function(question, user) {
   const questions = [question]
-  question.daisyChain.sort((a, b) => a.source.difficulty - b.source.difficulty)
 
+  question.daisyChain.sort((a, b) => a.source.difficulty - b.source.difficulty)
   const [seen, unseen] = partition(
     question.daisyChain.filter(d => d.type === "sharesRoot"),
     d => user.words.map(w => String(w.id)).indexOf(String(d.source.id)) > -1

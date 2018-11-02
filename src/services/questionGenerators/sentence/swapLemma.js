@@ -19,7 +19,7 @@ module.exports = async (passage, passages, sources) => {
     if (allForms.length > 2) {
       TYPE = "Swap Lemma"
       const value = tag.value
-      const redHerrings = without(allForms, value).slice(0, 7)
+      const redHerrings = without(allForms, value).slice(0, 6)
       const answer = [{ value, prefill: false }]
 
       const prompt = condensePrompt(

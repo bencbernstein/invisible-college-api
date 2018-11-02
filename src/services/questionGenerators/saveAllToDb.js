@@ -26,14 +26,16 @@ exports.generate = async () => {
   if (CREATE_WORDS_QS) {
     for (const TYPE of Object.keys(wordQuestionTypes)) {
       try {
-        const promises = words.map(w => wordQuestions(w, words, passages, TYPE))
+        const promises = sample(words, 2).map(w =>
+          wordQuestions(w, words, passages, TYPE)
+        )
         const questions = flatten(await Promise.all(promises))
         questions.forEach(q => {
           q.passageOrWord = "word"
-          // console.log(q.daisyChain)
+          // console.log(q)
         })
-        console.log(`Creating ${questions.length} ${TYPE} questions.`)
-        await QuestionModel.create(questions)
+        // console.log(`Creating ${questions.length} ${TYPE} questions.`)
+        // await QuestionModel.create(questions)
       } catch (error) {
         console.log(error)
       }
@@ -42,14 +44,17 @@ exports.generate = async () => {
 
   if (CREATE_PASSAGE_QS) {
     try {
-      const promises = passages.map(p => passageQuestions(p, passages))
+      const passage = passages.find(
+        p => String(p._id) === "5bc158d027412a001faaa75a"
+      )
+      const promises = [passage].map(p => passageQuestions(p, passages))
       const questions = flatten(await Promise.all(promises))
       questions.forEach(q => {
         q.passageOrWord = "passage"
-        // console.log(q.daisyChain)
+        console.log(q)
       })
-      console.log(`Creating ${questions.length} passage questions.`)
-      await QuestionModel.create(questions)
+      // console.log(`Creating ${questions.length} passage questions.`)
+      // await QuestionModel.create(questions)
     } catch (error) {
       console.log(error)
     }
