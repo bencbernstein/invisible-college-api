@@ -154,10 +154,14 @@ const questionResolvers = {
       // Add shares root daisy chaining to each question
       const promises = wordQs.map(q => QuestionModel.createDaisyChain(q, user))
       const daisyChain = flatten(await Promise.all(promises))
-      // Add image / passage on correct to each question
+      // Add experience, image / passage on correct to each question
       const gameElements = []
       for (const question of daisyChain) {
-        gameElements.push(question)
+        const type = question.passageOrWord === "word" ? "word" : "passage"
+        const id = question.sources[type].id
+        const doc = user[`${type}s`].find(e => e.id.equals(id))
+        const experience = doc ? doc.experience : undefined
+        question.experience = experience
         const imageOnCorrect = await question.imageOnCorrect()
         if (imageOnCorrect) {
           gameElements.push(imageOnCorrect)
@@ -168,6 +172,7 @@ const questionResolvers = {
           }
         }
       }
+
       gameElements.push(passageQ)
       return JSON.stringify(gameElements)
     }

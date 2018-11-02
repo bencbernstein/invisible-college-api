@@ -45,6 +45,7 @@ const questionSchema = new Schema({
   },
   answerCount: { type: Number, min: 1 },
   redHerrings: { type: [String], required: true },
+  experience: Number,
   daisyChain: {
     type: [
       {
