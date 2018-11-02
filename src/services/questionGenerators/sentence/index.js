@@ -23,6 +23,7 @@ const TYPES = {
 }
 
 exports.passageQuestions = async (doc, docs, TYPE) => {
+  TYPE = "FINISH_THE_SENTENCE"
   const data = doc.questionData()
   const passage = { id: doc._id, value: doc.title }
   const sources = { passage }

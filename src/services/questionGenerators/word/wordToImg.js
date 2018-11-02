@@ -4,12 +4,12 @@ const ImageModel = require("../../../models/image")
 
 const toBase64 = doc => "data:image/jpg;base64," + doc.buf.toString("base64")
 
-module.exports = async (doc, redHerringDocs, sources, difficulty) =>
+module.exports = async (doc, redHerringDocs, sources, daisyChain) =>
   Promise.all(
     doc.images.map(async id => {
       const questions = []
-      const params = { sources, difficulty }
-      const reverseParams = { sources, difficulty }
+      const params = { sources, daisyChain, difficulty: 3 }
+      const reverseParams = { sources, daisyChain, difficulty: 3 }
 
       const imageDoc = await ImageModel.findById(id)
 

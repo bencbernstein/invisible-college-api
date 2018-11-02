@@ -46,7 +46,8 @@ module.exports = async (
           const copy = JSON.parse(JSON.stringify(tagged)).map(({ value }) => ({
             value
           }))
-          copy.splice(idx - len, len, { value, hide: true })
+          const spliceIdx = idx - position === "start" ? len : 0
+          copy.splice(spliceIdx, len, { value, hide: true })
           const answer = [{ value, prefill: false }]
           const prompt = condensePrompt(copy)
           const query = { connector, position, passage: { $ne: id } }

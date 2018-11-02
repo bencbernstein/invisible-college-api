@@ -1,4 +1,11 @@
-const { sample, uniq, omit, shuffle } = require("underscore")
+const {
+  sample,
+  uniq,
+  omit,
+  shuffle,
+  flatten,
+  partition
+} = require("underscore")
 const mongoose = require("mongoose")
 
 const QuestionModel = require("../../models/question")
@@ -11,11 +18,14 @@ const UserModel = require("../../models/user")
 const {
   wordQuestions
 } = require("../../services/questionGenerators/word/index")
+
 const generateQuestionsForText = require("../../services/questionGenerators/sentence/index")
 
 const onboardingWords = require("../data/onboardingWords").map(
   mongoose.Types.ObjectId
 )
+
+const { qForExp } = require("../../lib/helpers")
 
 const questionTypeDefs = `
 type Source {
@@ -59,10 +69,6 @@ type Question {
   experience: Int
 }
 
-type ImageOnCorrect {
-  base64: String
-}
-
 type QuestionTypeCount {
   type: String!
   count: Int!
@@ -80,6 +86,7 @@ extend type Query {
 
 extend type Mutation {
   saveQuestionsForUser(id: ID!, questions: String!): User
+  userSawFactoid(userId: ID!, id: ID!): Boolean
 }
 `
 
@@ -131,46 +138,37 @@ const questionResolvers = {
     },
 
     async questionsForUser(_, params) {
-      const attrs = { words: 1, passages: 1, _id: 0 }
       const user = await UserModel.findById(params.id)
       if (!user) throw new Error("User not found.")
-
-      const seenWords = onboardingWords.slice(0, 5)
-      // sample(uniq(onboardingWords), 5) concat user words
-
-      let questions = await QuestionModel.find({
-        "sources.word.id": { $in: seenWords },
-        difficulty: { $lt: 3 }
-      })
-      questions = uniq(questions, q => q.sources.word.value)
-      // questions = uniq(shuffle(questions), q => q.sources.word.value)
-
-      const words = await WordModel.find({ _id: { $in: seenWords } })
-
+      // Get id and filtered word ids for next unseen passage
+      const { id, wordIds } = await PassageModel.sourcesForNextUnseen(user)
+      // Get passage and word questions
+      const query = { "sources.passage.id": id }
+      const passageQ = await QuestionModel.findOne(query).sort("difficulty")
+      const wordsQuery = { "sources.word.id": { $in: wordIds } }
+      const wordQs = qForExp(
+        await QuestionModel.find(wordsQuery).sort("difficulty"),
+        user,
+        wordIds
+      )
+      // Add shares root daisy chaining to each question
+      const promises = wordQs.map(q => QuestionModel.createDaisyChain(q, user))
+      const daisyChain = flatten(await Promise.all(promises))
+      // Add image / passage on correct to each question
       const gameElements = []
-
-      for (const [idx, question] of questions.entries()) {
+      for (const question of daisyChain) {
         gameElements.push(question)
-        const word = words.find(w => w._id.equals(question.sources.word.id))
-
-        const daisyChain = await word.daisyChain()
-        if (daisyChain) {
-          gameElements.push(daisyChain)
-        }
-
-        const images = await word.imageDocs()
-        if (images.length) {
-          const image = sample(images)
-          gameElements.push({ base64: image.base64() })
-        }
-
-        const passages = await word.passageDocs("enriched")
-        if (passages.length) {
-          const passage = sample(passages)
-          gameElements.push({ title: passage.title, value: passage.rawValue() })
+        const imageOnCorrect = await question.imageOnCorrect()
+        if (imageOnCorrect) {
+          gameElements.push(imageOnCorrect)
+        } else if (Math.random() > 0.5) {
+          const passageOnCorrect = await question.passageOnCorrect()
+          if (passageOnCorrect) {
+            gameElements.push(passageOnCorrect)
+          }
         }
       }
-
+      gameElements.push(passageQ)
       return JSON.stringify(gameElements)
     }
   },
@@ -200,20 +198,23 @@ const questionResolvers = {
       })
 
       return user.save()
+    },
+
+    async userSawFactoid(_, params) {
+      const { userId, id } = params
+      const user = await UserModel.findById(userId)
+      if (!user) throw new Error("User not found.")
+
+      const passageIsUnseen = user.passages.map(p => p.id).indexOf(id) === -1
+
+      if (passageIsUnseen) {
+        user.passages.push({ id })
+        await user.save()
+      }
+
+      return true
     }
   }
 }
-
-const unseenWordQuestions = (ids, count) =>
-  QuestionModel.find({
-    "sources.word.id": { $nin: ids },
-    difficulty: { $lt: 3 }
-  }).limit(count)
-
-const seenWordQuestion = id =>
-  QuestionModel.findOne({
-    "sources.word.id": id,
-    TYPE: sample(WORD_LADDER[1])
-  })
 
 module.exports = { questionTypeDefs, questionResolvers }

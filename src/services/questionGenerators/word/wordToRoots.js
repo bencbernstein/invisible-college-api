@@ -7,7 +7,14 @@ const {
   flatten
 } = require("underscore")
 
-const question = (doc, redHerringDocs, oneRoot, highlight, TYPE) => {
+const question = (
+  doc,
+  redHerringDocs,
+  oneRoot,
+  highlight,
+  TYPE,
+  difficulty
+) => {
   const prompt = highlight
     ? doc.highlightedDefinition()
     : doc.unHighlightedDefinition()
@@ -27,23 +34,34 @@ const question = (doc, redHerringDocs, oneRoot, highlight, TYPE) => {
   )
   redHerrings = sample(redHerrings, 6 - answerValues.length)
 
-  return { TYPE, prompt, answer, redHerrings }
+  return { TYPE, prompt, answer, redHerrings, difficulty }
 }
 
-module.exports = (doc, redHerringDocs, sources, difficulty) => {
+module.exports = (doc, redHerringDocs, sources, daisyChain) => {
   if (!doc.isDecomposable) {
     return []
   }
 
+  const difficulty = hasMultipleRoots ? 2 : 1
+
   const questions = [
-    question(doc, redHerringDocs, false, true, "Word to Roots"),
-    question(doc, redHerringDocs, false, false, "Word to Roots (no highlight)")
+    question(doc, redHerringDocs, false, true, "Word to Roots", difficulty),
+    question(
+      doc,
+      redHerringDocs,
+      false,
+      false,
+      "Word to Roots (no highlight)",
+      difficulty + 1
+    )
   ]
 
   if (doc.hasMultipleRoots()) {
     const TYPE = "Word to Roots (no highlight | one root)"
-    questions.concat(question(doc, redHerringDocs, true, true, TYPE))
+    questions.concat(
+      question(doc, redHerringDocs, true, true, TYPE, difficulty)
+    )
   }
 
-  return questions.map(q => extend(q, { sources, difficulty }))
+  return questions.map(q => extend(q, { sources, daisyChain, difficulty }))
 }

@@ -15,6 +15,7 @@ extend type Query {
 
 extend type Query {
   passages: [Passage]
+  enrichedPassages: [Passage]
 }
 
 extend type Mutation {
@@ -96,6 +97,10 @@ const passageResolvers = {
 
     passage(_, params) {
       return PassageModel.findById(params.id).catch(err => new Error(err))
+    },
+
+    enrichedPassages(_, params) {
+      return PassageModel.find({ status: "enriched" })
     }
   },
   Mutation: {

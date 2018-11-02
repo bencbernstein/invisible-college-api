@@ -1,6 +1,6 @@
 const { extend } = require("underscore")
 
-const wordToDef = (doc, redHerringDocs, sources, difficulty) => {
+const wordToDef = (doc, redHerringDocs, sources, daisyChain) => {
   const { value, definition } = doc
 
   if (definition.length === 0) {
@@ -25,7 +25,7 @@ const wordToDef = (doc, redHerringDocs, sources, difficulty) => {
   reverseParams.redHerrings = redHerringDocs.map(d => d.simpleDefinition())
   questions.push(reverseParams)
 
-  return questions.map(q => extend(q, { sources, difficulty }))
+  return questions.map(q => extend(q, { sources, daisyChain, difficulty: 1 }))
 }
 
 module.exports = wordToDef
