@@ -162,6 +162,8 @@ const questionResolvers = {
         const doc = user[`${type}s`].find(e => e.id.equals(id))
         const experience = doc ? doc.experience : undefined
         question.experience = experience
+        gameElements.push(question)
+
         const imageOnCorrect = await question.imageOnCorrect()
         if (imageOnCorrect) {
           gameElements.push(imageOnCorrect)
