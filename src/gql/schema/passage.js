@@ -9,13 +9,53 @@ const ChoiceSetModel = require("../../models/choiceSet")
 const CONNECTORS = flatten(require("../../lib/connectors").map(c => c.elements))
 
 const passageTypeDefs = `
+type Tagged {
+  id: ID
+  value: String
+  tag: String
+  isFocusWord: Boolean
+  isPunctuation: Boolean
+  isSentenceConnector: Boolean
+  isConnector: Boolean
+  isUnfocused: Boolean
+  wordId: String
+  choiceSetId: String
+  entity: String
+}
+
+type Metadata {
+  name: String
+  source: String
+  date: String
+  author: String
+}
+
+type Passage {
+  id: ID!
+  startIdx: Int
+  filteredSentences: [Int]
+  endIdx: Int
+  difficulty: Int
+  filteredWords: [ID]
+  factoidOnCorrect: Boolean
+  value: String
+  sequence: String
+  tagged: [Tagged]
+  isEnriched: Boolean
+  metadata: Metadata
+  status: String
+  matchIdx: Int
+  title: String
+  source: String
+}
+
 extend type Query {
   passage(id: ID!): Passage
 }
 
 extend type Query {
   passages: [Passage]
-  enrichedPassages: [Passage]
+  enrichedPassages: [Passage]  
 }
 
 extend type Mutation {

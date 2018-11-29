@@ -75,7 +75,7 @@ extend type Mutation {
 extend type Query {
   word(id: ID!): Word 
   wordsByValues(values: String): [Word]
-  words(first: Int, startingWith: String, sortBy: String): [Word]
+  words: [Word]
   wordsToEnrich(attr: String): [Word]
   passagesForWord(value: String): [Passage]
   recommendPassageQueues(type: String!, limit: Int): [String]
@@ -88,14 +88,8 @@ const wordResolvers = {
       return WordModel.findById(params.id).catch(err => new Error(err))
     },
 
-    words(_, params) {
-      const { first, sortBy, startingWith } = params
-      const ascending = sortBy === "value" // Add asc. / desc. option later?
-      var value = new RegExp("^" + startingWith)
-      const query = { value }
-      const sort = {}
-      sort[sortBy] = ascending ? 1 : -1
-      return WordModel.find(query).sort(sort)
+    words() {
+      return WordModel.find()
     },
 
     async wordsByValues(_, params) {

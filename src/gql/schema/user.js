@@ -119,8 +119,9 @@ const userResolvers = {
     },
     async loginUser(_, params) {
       const { email, password } = params
+      console.log(email, password)
       const user = await UserModel.findOne({ email })
-
+      console.log(user)
       if (user) {
         const result = await user.comparePassword(password)
         if (result === true) {
