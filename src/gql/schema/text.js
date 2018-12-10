@@ -11,6 +11,8 @@ const client = new elasticsearch.Client({
   ]
 })
 
+const PassageModel = require("../../models/passage")
+
 const textTypeDefs = `
 type Section {
   sentences: [String]!
@@ -42,10 +44,13 @@ extend type Query {
   texts(index: String!, search: String): [Text]
   text(id: ID!, query: String): Text
   findPassages(lcds: String!): [Hit]
+  getEsPassage(id: ID!): Hit
+  getPassage(id: ID!): Passage2
 }
 
 extend type Mutation {
   updateText(id: ID!, update: String!): Boolean
+  updatePassage(id: ID!, update: String!): Passage2
 }
 `
 
@@ -64,6 +69,7 @@ const textResolvers = {
           body: { query },
           size: 300
         })
+
         return res.hits.hits.map(({ _id, _source }) => ({
           id: _id,
           title: _source.title
@@ -97,11 +103,24 @@ const textResolvers = {
       return { id, title }
     },
 
+    getEsPassage(_, params) {
+      return client.get({
+        index: "simple_english_wikipedia",
+        type: "_doc",
+        id: params.id,
+        routing: 1
+      })
+    },
+
+    getPassage(_, params) {
+      return PassageModel.findById(params.id)
+    },
+
     async findPassages(_, params) {
-      const { lcds } = params
-      const should = lcds
+      const should = params.lcds
         .split(",")
         .map(sentences => ({ match: { sentences } }))
+
       const query = { bool: { minimum_should_match: 1, should } }
       const highlight = {
         pre_tags: ["<span class='highlight'>"],
@@ -110,7 +129,7 @@ const textResolvers = {
       }
       const body = { query, highlight }
 
-      const res = await client.search({
+      return await client.search({
         index: "simple_english_wikipedia",
         body,
         size: 300
@@ -129,6 +148,13 @@ const textResolvers = {
           console.log(error, res)
           return true
         }
+      )
+    },
+
+    updatePassage(_, params) {
+      return PassageModel.findByIdAndUpdate(
+        params.id,
+        JSON.parse(decodeURIComponent(params.update))
       )
     }
   }

@@ -62,6 +62,14 @@ var wordSchema = new Schema({
   sharesRoot: [Schema.Types.ObjectId]
 })
 
+wordSchema.statics.allForms = async function() {
+  const words = await this.find({}, { value: 1, otherForms: 1 })
+  return words.map(({ _id, otherForms, value }) => ({
+    _id,
+    values: otherForms.concat(value)
+  }))
+}
+
 wordSchema.methods.simpleDefinition = function() {
   return this.definition.map(d => d.value).join("")
 }

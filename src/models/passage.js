@@ -15,15 +15,15 @@ var passageSchema = new Schema({
   source: String,
   title: String,
   difficulty: { type: Number, min: 1, max: 10 },
-  matchIdx: { type: Number, required: true },
-  value: { type: String, required: true },
+  matchIdx: { type: Number },
+  value: { type: String },
   factoidOnCorrect: { type: Boolean, required: true, default: false },
   status: {
     type: String,
     enum: STATUSES
   },
-  filteredSentences: { type: [Number], required: true, default: [] },
-  filteredWords: { type: [Schema.Types.ObjectId], required: true, default: [] },
+  filteredSentences: { type: [Number] },
+  filteredWords: { type: [Schema.Types.ObjectId] },
   tagged: {
     type: [
       {
