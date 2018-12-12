@@ -88,12 +88,6 @@ type Mutation {
     id: ID!
   ): User
 
-  saveBookmark (
-    userId: String!
-    textId: String!
-    sentenceIdx: Int!
-  ): User
-
   getStats(id: ID!): StatsResult 
 }
 
@@ -117,11 +111,11 @@ const userResolvers = {
     addUser(_, params) {
       return UserModel.create(params)
     },
+
     async loginUser(_, params) {
       const { email, password } = params
-      console.log(email, password)
       const user = await UserModel.findOne({ email })
-      console.log(user)
+
       if (user) {
         const result = await user.comparePassword(password)
         if (result === true) {
@@ -134,6 +128,7 @@ const userResolvers = {
 
       throw new Error("Email not found.")
     },
+
     async createUser(_, params) {
       const user = await UserModel.findOne({ email: params.email })
       if (user) throw new Error("Email taken.")
@@ -150,25 +145,6 @@ const userResolvers = {
         { $set: { email: params.email } },
         { new: true }
       )
-    },
-
-    async saveBookmark(_, params) {
-      const user = await UserModel.findById(params.userId)
-      const bookmarks = user.bookmarks
-      const bookmark = {
-        textId: params.textId,
-        sentenceIdx: parseInt(params.sentenceIdx, 10)
-      }
-      const idx = bookmarks.findIndex(
-        ({ textId }) => textId.toString() === bookmark.textId
-      )
-      if (idx > -1) {
-        bookmarks[idx] = bookmark
-      } else {
-        bookmarks.push(bookmark)
-      }
-      user.save()
-      return user
     },
 
     async getStats(_, params) {

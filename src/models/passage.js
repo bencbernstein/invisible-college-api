@@ -14,16 +14,8 @@ const SUB_CONJ = find(
 var passageSchema = new Schema({
   source: String,
   title: String,
-  difficulty: { type: Number, min: 1, max: 10 },
-  matchIdx: { type: Number },
-  value: { type: String },
   factoidOnCorrect: { type: Boolean, required: true, default: false },
-  status: {
-    type: String,
-    enum: STATUSES
-  },
-  filteredSentences: { type: [Number] },
-  filteredWords: { type: [Schema.Types.ObjectId] },
+  difficulty: { type: Number, required: true, default: 1, min: 1, max: 100 },
   tagged: {
     type: [
       {

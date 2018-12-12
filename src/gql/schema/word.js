@@ -1,8 +1,8 @@
-const _u = require("underscore")
-const WordModel = require("../../models/word")
-const PassageModel = require("../../models/passage")
+const { shuffle } = require("lodash")
 
-const { enrich } = require("../../services/OxfordDictionaryService")
+const WordModel = require("../../models/word")
+const ImageModel = require("../../models/image")
+const PassageModel = require("../../models/passage")
 
 const wordTypeDefs = `
 type Component {
@@ -54,26 +54,26 @@ type Enriched {
   lemmas: [String]
 }
 
+type WordResponse {
+  word: Word
+  images: [Image]
+}
+
+type ImageAndWordResponse {
+  word: Word
+  image: Image
+}
+
 extend type Mutation {
-  addWord (
-    value: String!
-  ): Word
-
-  enrichWord (
-    value: String!
-  ): Enriched
-
-  removeWord (
-    id: ID!
-  ): Word
-
-  updateWord (
-    word: String!
-  ): Word
+  addWord (value: String!): Word
+  enrichWord (value: String!): Enriched
+  removeWord (id: ID!): Word
+  updateWord (word: String!): Word
+  removeImageFromWord(id: ID!, imageId: ID!): ImageAndWordResponse
 }
 
 extend type Query {
-  word(id: ID!): Word 
+  word(id: ID!): WordResponse 
   wordsByValues(values: String): [Word]
   words: [Word]
   wordsToEnrich(attr: String): [Word]
@@ -84,8 +84,10 @@ extend type Query {
 
 const wordResolvers = {
   Query: {
-    word(_, params) {
-      return WordModel.findById(params.id).catch(err => new Error(err))
+    async word(_, params) {
+      const word = await WordModel.findById(params.id)
+      const images = await ImageModel.find({ _id: word.images })
+      return { images, word }
     },
 
     words() {
@@ -110,7 +112,7 @@ const wordResolvers = {
         query[attr] = { $size: 0 }
       }
       let words = await WordModel.find(query)
-      word = _u.shuffle(words)
+      word = shuffle(words)
       words = words.slice(0, 25)
       return words
     },
@@ -127,20 +129,41 @@ const wordResolvers = {
   Mutation: {
     async addWord(_, params) {
       const value = params.value.toLowerCase()
-      const unverified = await enrich(value)
-      return WordModel.create({ value, unverified })
+      // const unverified = await enrich(value) , unverified
+      return WordModel.create({ value })
     },
+
     async enrichWord(_, params) {
-      const value = params.value.toLowerCase()
-      const unverified = await enrich(value)
-      return { value, ...unverified }
+      // const value = params.value.toLowerCase()
+      // const unverified = await enrich(value)
+      // return { value, ...unverified }
     },
+
     removeWord(_, params) {
       return WordModel.findByIdAndRemove(params.id)
     },
+
     updateWord(_, params) {
       const decoded = JSON.parse(decodeURIComponent(params.word))
       return WordModel.findByIdAndUpdate(decoded.id, decoded, { new: true })
+    },
+
+    async removeImageFromWord(_, params) {
+      const image = await ImageModel.findByIdAndUpdate(
+        params.imageId,
+        {
+          $pull: { words: params.id }
+        },
+        { new: true }
+      )
+      const word = await WordModel.findByIdAndUpdate(
+        params.id,
+        {
+          $pull: { images: params.imageId }
+        },
+        { new: true }
+      )
+      return { image, word }
     }
   }
 }

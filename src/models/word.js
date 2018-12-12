@@ -5,7 +5,6 @@ const Schema = mongoose.Schema
 const ImageModel = require("./image")
 const QuestionModel = require("./question")
 const PassageModel = require("./passage")
-const categories = require("../lib/categories")
 
 var wordSchema = new Schema({
   value: { type: String, required: true },
@@ -13,10 +12,6 @@ var wordSchema = new Schema({
   synonyms: { type: [String], default: [] },
   lcd: String,
   otherForms: { type: [String] },
-  categories: {
-    type: [String],
-    default: []
-  },
   components: {
     type: [
       {

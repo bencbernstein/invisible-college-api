@@ -23,28 +23,6 @@ const client = new elasticsearch.Client({
 })
 
 const queueTypeDefs = `
-type Passage2 {
-  id: ID!
-  factoidOnCorrect: Boolean!
-  tagged: [Tagged2]!
-  source: String
-  title: String
-  esId: ID!
-}
-
-type Tagged2 {
-  id: ID
-  value: String
-  pos: String
-  isFocusWord: Boolean
-  isPunctuation: Boolean
-  isSentenceConnector: Boolean
-  isConnector: Boolean
-  isUnfocused: Boolean
-  wordId: String
-  choiceSetId: String
-}
-
 type Decision {
   indexes: [Int]
   accepted: Boolean
@@ -102,7 +80,7 @@ const queueResolvers = {
   Mutation: {
     async createQueue(_, params) {
       const queue = JSON.parse(decodeURIComponent(params.data))
-      queue.createdOn = new Date()
+      queue.createdOn = Date.now()
       const result = await QueueModel.create(queue)
       return true
     },

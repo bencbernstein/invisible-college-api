@@ -11,7 +11,6 @@ const mongoose = require("mongoose")
 const QuestionModel = require("../../models/question")
 const WordModel = require("../../models/word")
 const ImageModel = require("../../models/image")
-const TextModel = require("../../models/text")
 const PassageModel = require("../../models/passage")
 const UserModel = require("../../models/user")
 
@@ -20,10 +19,6 @@ const {
 } = require("../../services/questionGenerators/word/index")
 
 const generateQuestionsForText = require("../../services/questionGenerators/sentence/index")
-
-const onboardingWords = require("../data/onboardingWords").map(
-  mongoose.Types.ObjectId
-)
 
 const { qForExp } = require("../../lib/helpers")
 
