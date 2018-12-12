@@ -1,6 +1,6 @@
 const elasticsearch = require("elasticsearch")
 
-import CONFIG from "./lib/config"
+const CONFIG = require("./lib/config")
 
 const client = new elasticsearch.Client({
   host: [
