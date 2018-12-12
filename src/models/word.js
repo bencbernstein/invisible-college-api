@@ -5,7 +5,6 @@ const Schema = mongoose.Schema
 const ImageModel = require("./image")
 const QuestionModel = require("./question")
 const PassageModel = require("./passage")
-const categories = require("../lib/categories")
 
 var wordSchema = new Schema({
   value: { type: String, required: true },
@@ -13,10 +12,6 @@ var wordSchema = new Schema({
   synonyms: { type: [String], default: [] },
   lcd: String,
   otherForms: { type: [String] },
-  categories: {
-    type: [String],
-    default: []
-  },
   components: {
     type: [
       {
@@ -61,6 +56,14 @@ var wordSchema = new Schema({
   enrichedPassagesCount: { type: Number, required: true, default: 0 },
   sharesRoot: [Schema.Types.ObjectId]
 })
+
+wordSchema.statics.allForms = async function() {
+  const words = await this.find({}, { value: 1, otherForms: 1 })
+  return words.map(({ _id, otherForms, value }) => ({
+    _id,
+    values: otherForms.concat(value)
+  }))
+}
 
 wordSchema.methods.simpleDefinition = function() {
   return this.definition.map(d => d.value).join("")

@@ -88,12 +88,6 @@ type Mutation {
     id: ID!
   ): User
 
-  saveBookmark (
-    userId: String!
-    textId: String!
-    sentenceIdx: Int!
-  ): User
-
   getStats(id: ID!): StatsResult 
 }
 
@@ -117,6 +111,7 @@ const userResolvers = {
     addUser(_, params) {
       return UserModel.create(params)
     },
+
     async loginUser(_, params) {
       const { email, password } = params
       const user = await UserModel.findOne({ email })
@@ -133,6 +128,7 @@ const userResolvers = {
 
       throw new Error("Email not found.")
     },
+
     async createUser(_, params) {
       const user = await UserModel.findOne({ email: params.email })
       if (user) throw new Error("Email taken.")
@@ -151,25 +147,6 @@ const userResolvers = {
       )
     },
 
-    async saveBookmark(_, params) {
-      const user = await UserModel.findById(params.userId)
-      const bookmarks = user.bookmarks
-      const bookmark = {
-        textId: params.textId,
-        sentenceIdx: parseInt(params.sentenceIdx, 10)
-      }
-      const idx = bookmarks.findIndex(
-        ({ textId }) => textId.toString() === bookmark.textId
-      )
-      if (idx > -1) {
-        bookmarks[idx] = bookmark
-      } else {
-        bookmarks.push(bookmark)
-      }
-      user.save()
-      return user
-    },
-
     async getStats(_, params) {
       const id = params.id
       const user = await UserModel.findById(id)
@@ -186,7 +163,6 @@ const userResolvers = {
       await user.save()
 
       const LEADERBOARD = "all_time_leaderboard"
-      await cache.del(LEADERBOARD)
       await cache.zadd([LEADERBOARD, user.questionsAnswered, id])
 
       let lower, upper

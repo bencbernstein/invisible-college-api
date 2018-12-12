@@ -35,10 +35,6 @@ app.post("/image", function(req, res, next) {
   return ImageController.create(req, res, next)
 })
 
-app.use("/image", function(req, res, next) {
-  return ImageController.parse(req, res, next)
-})
-
 server.applyMiddleware({ app })
 
 app.listen(CONFIG.PORT, () =>

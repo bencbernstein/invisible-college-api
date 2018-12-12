@@ -1,6 +1,6 @@
 const { sample, uniq } = require("lodash")
 
-const toSentences = passage => {
+exports.toSentences = passage => {
   const sentences = [[]]
   let idx = 0
 
@@ -16,12 +16,12 @@ const toSentences = passage => {
   return sentences
 }
 
-const track = (date, idx) => console.log(`${idx}: ${new Date() - date}`)
+exports.track = (date, idx) => console.log(`${idx}: ${new Date() - date}`)
 
-const isPunc = char =>
+exports.isPunc = char =>
   char !== undefined && [".", ",", ")", "'", '"'].indexOf(char) > -1
 
-const condensed = (arr, attrs) => {
+exports.condensed = (arr, attrs) => {
   const condensed = []
 
   arr.forEach(tag => {
@@ -43,10 +43,10 @@ const condensed = (arr, attrs) => {
   return condensed
 }
 
-const condenseInteractive = prompt => condensed(prompt, ["correct"])
-const condensePrompt = prompt => condensed(prompt, ["highlight", "hide"])
+exports.condenseInteractive = prompt => condensed(prompt, ["correct"])
+exports.condensePrompt = prompt => condensed(prompt, ["highlight", "hide"])
 
-const indicesInString = (source, find) => {
+exports.indicesInString = (source, find) => {
   const result = []
   for (i = 0; i < source.length; ++i) {
     if (source.substring(i, i + find.length) === find) {
@@ -56,7 +56,7 @@ const indicesInString = (source, find) => {
   return result
 }
 
-const qForExp = (pool, user, ids) => {
+exports.qForExp = (pool, user, ids) => {
   const questions = []
   for (const id of ids) {
     const selection = pool.filter(q => q.sources.word.id.equals(id))
@@ -73,12 +73,15 @@ const qForExp = (pool, user, ids) => {
   return questions
 }
 
-module.exports = {
-  isPunc,
-  toSentences,
-  track,
-  condensePrompt,
-  condenseInteractive,
-  indicesInString,
-  qForExp
-}
+exports.consecutiveGroups = arr =>
+  arr.sort().reduce((r, n) => {
+    const lastSubArray = r[r.length - 1]
+
+    if (!lastSubArray || lastSubArray[lastSubArray.length - 1] !== n - 1) {
+      r.push([])
+    }
+
+    r[r.length - 1].push(n)
+
+    return r
+  }, [])

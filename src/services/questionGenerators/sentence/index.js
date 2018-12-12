@@ -12,7 +12,6 @@ const PassageModel = require("../../../models/passage")
 const PartialSentenceModel = require("../../../models/partialSentence")
 const WordModel = require("../../../models/word")
 const QuestionModel = require("../../../models/question")
-const QuestionSequenceModel = require("../../../models/questionSequence")
 
 const TYPES = {
   PART_OF_SPEECH: partOfSpeech,
