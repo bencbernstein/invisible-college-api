@@ -16,6 +16,7 @@ var passageSchema = new Schema({
   title: String,
   factoidOnCorrect: { type: Boolean, required: true, default: false },
   difficulty: { type: Number, required: true, default: 1, min: 1, max: 100 },
+  enriched: { type: Boolean, required: true, default: false },
   tagged: {
     type: [
       {

@@ -44,10 +44,13 @@ type Queue {
   items: [QueueItem]
   createdOn: String
   accessLevel: Int
+  curriculumId: ID
+  part: Int
+  curriculum: String
 }
 
 extend type Mutation {
-  createQueue (
+  createQueues (
     data: String!
   ): Boolean
 
@@ -64,6 +67,10 @@ extend type Mutation {
   finishedQueue(
     id: String!
   ): Boolean
+
+  finishedEnrichQueue(
+    id: String!
+  ): Boolean
 }
 
 extend type Query {
@@ -74,26 +81,27 @@ extend type Query {
 const queueResolvers = {
   Query: {
     queues() {
-      return QueueModel.find()
+      return QueueModel.find({ completed: false })
     }
   },
   Mutation: {
-    async createQueue(_, params) {
-      const queue = JSON.parse(decodeURIComponent(params.data))
-      queue.createdOn = Date.now()
-      const result = await QueueModel.create(queue)
+    async createQueues(_, params) {
+      const queues = JSON.parse(decodeURIComponent(params.data))
+      queues.forEach(queue => (queue.createdOn = Date.now()))
+      await QueueModel.create(queues)
       return true
     },
 
     async updateQueueItem(_, params) {
       const index = parseInt(params.index, 10)
-      const update = {}
-      update["items." + index] = JSON.parse(decodeURIComponent(params.update))
-      return QueueModel.findByIdAndUpdate(
-        params.id,
-        { $set: update },
-        { new: true }
-      )
+      let update = {}
+      update["items." + index] = params.update
+        ? JSON.parse(decodeURIComponent(params.update))
+        : 1
+      update = params.update ? { $set: update } : { $unset: update }
+      await QueueModel.findByIdAndUpdate(params.id, update, { new: true })
+      const pull = { $pull: { items: null } }
+      return QueueModel.findByIdAndUpdate(params.id, pull, { new: true })
     },
 
     async finishedQueue(_, params) {
@@ -138,17 +146,36 @@ const queueResolvers = {
       const enrichQueue = {
         entity: "passage",
         type: "enrich",
-        createdOn: new Date(),
-        accessLevel: 1,
+        createdOn: Date.now(),
+        accessLevel: queue.accessLevel,
+        curriculumId: queue.curriculumId,
+        curriculum: queue.curriculum,
+        part: queue.part,
         items: passages.map(({ _id }) => ({ id: _id, decisions: [] }))
       }
 
+      // TODO: - set up user for enrich queue
+      await QueueModel.findByIdAndUpdate(params.id, {
+        $set: { completed: true }
+      })
       await PassageModel.create(passages)
       await QueueModel.create(enrichQueue)
 
-      // Turn off filter queue
-      // Set up user for enrich queue
+      return true
+    },
 
+    async finishedEnrichQueue(_, params) {
+      const queue = await QueueModel.findById(params.id)
+      const ids = queue.items.map(({ id }) => id)
+      await PassageModel.updateMany(
+        { _id: { $in: ids } },
+        {
+          $set: { enriched: true }
+        }
+      )
+      await QueueModel.findByIdAndUpdate(params.id, {
+        $set: { completed: true }
+      })
       return true
     },
 

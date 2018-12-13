@@ -22,6 +22,12 @@ type Section {
   title: String!
   sections_count: Int
   section: Int!
+  join_field: JoinField
+}
+
+type JoinField {
+  name: String!
+  parent: String!
 }
 
 type Highlight {

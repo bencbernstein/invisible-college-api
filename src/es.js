@@ -1,10 +1,12 @@
 const elasticsearch = require("elasticsearch")
 
+const CONFIG = require("./lib/config")
+
 const client = new elasticsearch.Client({
   host: [
     {
-      host: "ee2174119d634def91a0a4b2a91c19e4.us-east-1.aws.found.io",
-      auth: "elastic:3y44M8nGXMrppI9OQWikcxZZ",
+      host: CONFIG.ES_HOST,
+      auth: CONFIG.ES_AUTH,
       protocol: "https",
       port: 9243
     }
