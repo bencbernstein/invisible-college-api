@@ -134,6 +134,7 @@ const queueResolvers = {
           const tagged = tagSentences(filtered, words, choiceSets)
           passages.push({
             _id: mongoose.Types.ObjectId(),
+            curriculumId: queue.curriculumId,
             tagged,
             title,
             source,

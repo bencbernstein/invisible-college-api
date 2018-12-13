@@ -9,6 +9,7 @@ type Passage {
   source: String
   title: String
   esId: ID!
+  curriculumId: ID!
 }
 
 type Tagged {
@@ -26,7 +27,7 @@ type Tagged {
 
 extend type Query {
   getPassage(id: ID!): Passage
-  getPassages: [Passage]
+  getPassages(curriculumId: ID): [Passage]
 }
 
 extend type Mutation {
@@ -41,8 +42,12 @@ const passageResolvers = {
       return PassageModel.findById(params.id)
     },
 
-    getPassages() {
-      return PassageModel.find({ enriched: true })
+    getPassages(_, params) {
+      const query = { enriched: true }
+      if (params.curriculumId) {
+        query.curriculumId = params.curriculumId
+      }
+      return PassageModel.find(query)
     }
   },
   Mutation: {
