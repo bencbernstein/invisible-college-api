@@ -31,6 +31,7 @@ extend type Query {
 
 extend type Mutation {
   updatePassage(id: ID!, update: String!): Passage
+  removePassage(id: ID!): Passage
 }
 `
 
@@ -41,7 +42,7 @@ const passageResolvers = {
     },
 
     getPassages() {
-      return PassageModel.find()
+      return PassageModel.find({ enriched: true })
     }
   },
   Mutation: {
@@ -50,6 +51,10 @@ const passageResolvers = {
         params.id,
         JSON.parse(decodeURIComponent(params.update))
       )
+    },
+
+    removePassage(_, params) {
+      return PassageModel.findByIdAndRemove(params.id)
     }
   }
 }

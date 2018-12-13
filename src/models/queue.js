@@ -37,7 +37,11 @@ var queueSchema = new Schema({
       }
     ]
   },
-  createdOn: String
+  curriculumId: { type: Schema.Types.ObjectId, required: true },
+  curriculum: { type: String, required: true },
+  part: { type: Number, min: 1 },
+  createdOn: String,
+  completed: { type: Boolean, required: true, default: false }
 })
 
 const Model = mongoose.model("Queue", queueSchema)
