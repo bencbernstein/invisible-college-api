@@ -38,8 +38,8 @@ const userSchema = new Schema({
     type: [
       {
         id: { type: Schema.Types.ObjectId, required: true },
-        seenCount: { type: Number, required: true, min: 1 },
-        correctCount: { type: Number, required: true, min: 0 },
+        seenCount: { type: Number, required: true, min: 0, default: 0 },
+        correctCount: { type: Number, required: true, min: 0, default: 0 },
         experience: { type: Number, required: true, min: 0, default: 0 }
       }
     ]
@@ -78,6 +78,21 @@ userSchema.methods.initials = function() {
     this.firstName.charAt(0).toUpperCase() +
     this.lastName.charAt(0).toUpperCase()
   )
+}
+
+userSchema.methods.slimQuestionHistory = function() {
+  return this.words
+    .map(
+      ({ value, experience, correctCount, seenCount }) =>
+        `${value} - ${correctCount}/${seenCount} (${experience})`
+    )
+    .concat(
+      ...this.passages.map(
+        ({ id, experience, correctCount, seenCount }) =>
+          `${id} - ${correctCount}/${seenCount} (${experience})`
+      )
+    )
+    .join("\n")
 }
 
 const Model = mongoose.model("User", userSchema)

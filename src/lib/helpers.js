@@ -18,27 +18,30 @@ exports.toSentences = passage => {
 
 exports.track = (date, idx) => console.log(`${idx}: ${new Date() - date}`)
 
-exports.isPunc = char =>
+const isPunc = char =>
   char !== undefined && [".", ",", ")", "'", '"'].indexOf(char) > -1
+exports.isPunc = isPunc
 
-exports.condensed = (arr, attrs) => {
+const condensed = (arr, attrs) => {
   const condensed = []
 
-  arr.forEach(tag => {
-    if (condensed.length) {
-      const last = condensed[condensed.length - 1]
-      let { value } = last
-      const shouldCombine = attrs.every(a => last[a] === tag[a])
+  for (const elem of arr) {
+    const length = condensed.length
+    const last = condensed[length - 1]
+    const isEmpty = length === 0
+    const addTo =
+      isEmpty ||
+      last.isSentenceConnector ||
+      elem.isSentenceConnector ||
+      !attrs.every(a => last[a] === elem[a])
 
-      if (shouldCombine) {
-        value += isPunc(tag.value) ? tag.value : ` ${tag.value}`
-        condensed[condensed.length - 1].value = value
-        return
-      }
+    if (addTo) {
+      condensed.push(elem)
+    } else {
+      const value = elem.value
+      condensed[length - 1].value += isPunc(value) ? value : ` ${value}`
     }
-
-    condensed.push(tag)
-  })
+  }
 
   return condensed
 }

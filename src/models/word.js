@@ -49,11 +49,14 @@ var wordSchema = new Schema({
   },
   obscurity: { type: Number, required: true, default: 3 },
   images: { type: [Schema.Types.ObjectId], required: true, default: [] },
-  passages: { type: [Schema.Types.ObjectId], required: true, default: [] },
-  unfilteredPassagesCount: { type: Number, required: true, default: 0 },
-  rejectedPassagesCount: { type: Number, required: true, default: 0 },
-  acceptedPassagesCount: { type: Number, required: true, default: 0 },
-  enrichedPassagesCount: { type: Number, required: true, default: 0 },
+  passages: {
+    type: {
+      id: { type: Schema.Types.ObjectId, required: true },
+      curriculumId: { type: Schema.Types.ObjectId, required: true }
+    },
+    required: true,
+    default: []
+  },
   sharesRoot: [Schema.Types.ObjectId]
 })
 
@@ -69,26 +72,8 @@ wordSchema.methods.simpleDefinition = function() {
   return this.definition.map(d => d.value).join("")
 }
 
-wordSchema.methods.daisyChain = function() {
-  if (this.sharesRoot.length) {
-    return QuestionModel.findOne({
-      "sources.word.id": { $in: this.sharesRoot },
-      difficulty: { $lt: 3 }
-    })
-  }
-}
-
-wordSchema.methods.imageDocs = function() {
-  if (this.images.length === 0) {
-    return []
-  }
-  return ImageModel.find({ _id: { $in: this.images } })
-}
-
 wordSchema.methods.passageDocs = function(status) {
-  if (this.passages === 0) {
-    return []
-  }
+  if (this.passages === 0) return []
   const query = { _id: { $in: this.passages } }
   if (status) {
     query.status = status
@@ -135,22 +120,6 @@ wordSchema.statics.redHerring = async function(doc) {
   }
 
   return this.find(basicQuery).limit(5)
-}
-
-wordSchema.statics.updatePassageStatus = async function updatePassageStatus(
-  id,
-  from,
-  to
-) {
-  if (from === to) {
-    return
-  }
-  const words = await this.find({ passages: id })
-  words.forEach(w => {
-    w[`${from}PassagesCount`] -= 1
-    w[`${to}PassagesCount`] += 1
-  })
-  return Promise.all(words.map(w => w.save()))
 }
 
 wordSchema.pre("save", async function(next) {

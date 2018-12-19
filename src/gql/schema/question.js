@@ -52,7 +52,7 @@ type InteractivePart {
 }
 
 type Question {
-  id: ID!
+  _id: ID!
   TYPE: String!
   prompt: [PromptPart]
   answer: [AnswerPart]
@@ -74,14 +74,15 @@ extend type Query {
   questionsForWord(id: ID!): [Question]
   questionsForText(id: ID!): [Question]
   questions(questionType: String, after: String): [Question]
-  questionsForUser(id: ID!): String!
+  questionsForUser(id: ID!, curriculumId: ID!): String!
   questionsForType(type: String!): String!
   questionTypeCounts: [QuestionTypeCount]
 }
 
 extend type Mutation {
-  saveQuestionsForUser(id: ID!, questions: String!): User
+  saveQuestionsForUser(id: ID!, questions: String!): Boolean
   userSawFactoid(userId: ID!, id: ID!): Boolean
+  clearUserHistory(id: ID!): User
 }
 `
 
@@ -133,10 +134,19 @@ const questionResolvers = {
     },
 
     async questionsForUser(_, params) {
+      const curriculumId = params.curriculumId
       const user = await UserModel.findById(params.id)
       if (!user) throw new Error("User not found.")
+
+      // console.log("------------------------")
+      // console.log(user.slimQuestionHistory())
+
       // Get id and filtered word ids for next unseen passage
-      const { id, wordIds } = await PassageModel.sourcesForNextUnseen(user)
+      const { id, wordIds } = await PassageModel.sourcesForNextUnseen(
+        user,
+        curriculumId
+      )
+
       // Get passage and word questions
       const query = { "sources.passage.id": id }
       const passageQ = await QuestionModel.findOne(query).sort("difficulty")
@@ -146,17 +156,18 @@ const questionResolvers = {
         user,
         wordIds
       )
+
       // Add shares root daisy chaining to each question
       const promises = wordQs.map(q => QuestionModel.createDaisyChain(q, user))
       const daisyChain = flatten(await Promise.all(promises))
+
       // Add experience, image / passage on correct to each question
       const gameElements = []
       for (const question of daisyChain) {
         const type = question.passageOrWord === "word" ? "word" : "passage"
         const id = question.sources[type].id
         const doc = user[`${type}s`].find(e => e.id.equals(id))
-        const experience = doc ? doc.experience : undefined
-        question.experience = experience
+        question.experience = doc ? doc.experience : undefined
         gameElements.push(question)
 
         const imageOnCorrect = await question.imageOnCorrect()
@@ -171,6 +182,7 @@ const questionResolvers = {
       }
 
       gameElements.push(passageQ)
+
       return JSON.stringify(gameElements)
     }
   },
@@ -181,6 +193,7 @@ const questionResolvers = {
       if (!user) throw new Error("User not found.")
 
       const decoded = JSON.parse(decodeURIComponent(params.questions))
+
       decoded.forEach(question => {
         const { id, value, correct, type } = question
         const correctCount = correct ? 1 : 0
@@ -199,7 +212,8 @@ const questionResolvers = {
         }
       })
 
-      return user.save()
+      await user.save()
+      return true
     },
 
     async userSawFactoid(_, params) {
@@ -215,6 +229,19 @@ const questionResolvers = {
       }
 
       return true
+    },
+
+    clearUserHistory(_, params) {
+      return UserModel.findByIdAndUpdate(params.id, {
+        $set: {
+          words: [],
+          passages: [],
+          questionsAnswered: 0,
+          wordsLearned: 0,
+          passagesRead: 0,
+          rank: 1
+        }
+      })
     }
   }
 }

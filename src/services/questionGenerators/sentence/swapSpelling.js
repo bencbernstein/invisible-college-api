@@ -4,12 +4,11 @@ const { condensePrompt, condenseInteractive } = require("../../../lib/helpers")
 
 const misspellings = require("./data/misspellings")
 
-module.exports = async (passage, passages, sources) => {
-  const { tagged, focusWordIndices } = passage
+module.exports = async (passage, sources) => {
   const questions = []
 
-  focusWordIndices.forEach(idx => {
-    const { value } = tagged[idx]
+  passage.focusWordIndices().forEach(idx => {
+    const { value } = passage.tagged[idx]
 
     const redHerrings = sample(misspellings(value), 6)
     const redHerring = redHerrings.shift()
@@ -18,7 +17,7 @@ module.exports = async (passage, passages, sources) => {
       const TYPE = "Swap Spelling (reverse)"
       const prompt = [{ value: "Find the mis-spelled word", highlight: false }]
       const interactive = condenseInteractive(
-        tagged.map((tag, idx2) => ({
+        passage.tagged.map((tag, idx2) => ({
           value: idx === idx2 ? redHerring : tag.value,
           correct: idx === idx2
         }))
@@ -30,11 +29,10 @@ module.exports = async (passage, passages, sources) => {
       const TYPE = "Swap Spelling"
       const answer = [{ value, prefill: false }]
       const prompt = condensePrompt(
-        tagged.map(
-          (tag, idx2) =>
-            idx === idx2
-              ? { highlight: true, value: redHerring }
-              : { value: tag.value }
+        passage.tagged.map((tag, idx2) =>
+          idx === idx2
+            ? { highlight: true, value: redHerring }
+            : { value: tag.value }
         )
       )
       questions.push({ TYPE, prompt, redHerrings, sources, answer })

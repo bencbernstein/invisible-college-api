@@ -26,36 +26,31 @@ const getRedHerringDocs = (filterId, words) => {
 
 const getDaisyChain = (word, words, passages) => {
   const root = id => ({
-    source: {
-      id,
-      model: "word",
-      difficulty: get(words.find(d => d._id.equals(id)), "obscurity")
-    },
-    type: "sharesRoot"
+    id,
+    difficulty: get(words.find(d => d._id.equals(id)), "obscurity"),
+    type: "word"
   })
 
   const imageOnCorrect = id => ({
-    source: { id, model: "image" },
-    type: "imageOnCorrect"
+    id,
+    type: "image"
   })
 
-  const factoidOnCorrect = id => ({
-    source: {
-      id,
-      model: "passage",
-      difficulty: get(
-        passages.find(p => p._id.equals(id)),
-        "difficulty",
-        undefined
-      )
-    },
-    type: "passageOnCorrect"
+  const factoidOnCorrect = ({ id, curriculumId }) => ({
+    id,
+    curriculumId,
+    type: "passage",
+    difficulty: get(
+      passages.find(p => p._id.equals(id)),
+      "difficulty",
+      undefined
+    )
   })
 
   return union(
-    word.sharesRoot.map(root).filter(d => d.source.difficulty),
+    word.sharesRoot.map(root).filter(d => d.difficulty),
     word.images.map(imageOnCorrect),
-    word.passages.map(factoidOnCorrect).filter(d => d.source.difficulty)
+    word.passages.map(factoidOnCorrect).filter(d => d.difficulty)
   )
 }
 

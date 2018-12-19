@@ -11,6 +11,10 @@ const QueueModel = require("../../models/queue")
 const CONNECTORS = flatten(require("../../lib/connectors").map(c => c.elements))
 const { consecutiveGroups } = require("../../lib/helpers")
 
+const {
+  createPassageQuestions
+} = require("../../services/questionGenerators/sentence/index")
+
 const client = new elasticsearch.Client({
   host: [
     {
@@ -168,15 +172,21 @@ const queueResolvers = {
     async finishedEnrichQueue(_, params) {
       const queue = await QueueModel.findById(params.id)
       const ids = queue.items.map(({ id }) => id)
+
       await PassageModel.updateMany(
         { _id: { $in: ids } },
         {
           $set: { enriched: true }
         }
       )
+
+      // TODO: - is this the right place?
+      ids.forEach(createPassageQuestions)
+
       await QueueModel.findByIdAndUpdate(params.id, {
         $set: { completed: true }
       })
+
       return true
     },
 

@@ -10,7 +10,6 @@ const { qForExp } = require("../lib/helpers")
 const questionSchema = new Schema({
   TYPE: { type: String, required: true },
   passageOrWord: { type: String, enum: ["passage", "word"], required: true },
-  passageDifficulty: { type: Number, required: true, default: 1, min: 1 },
   difficulty: { type: Number, required: true, default: 1, min: 1 },
   prompt: {
     type: [
@@ -45,26 +44,24 @@ const questionSchema = new Schema({
   daisyChain: {
     type: [
       {
-        source: {
-          type: {
-            model: {
-              type: String,
-              enum: ["word", "passage", "question", "image"],
-              required: true
-            },
-            id: { type: Schema.Types.ObjectId },
-            difficulty: { type: Number, min: 1, max: 10 }
-          },
-
-          required: true
-        },
         type: {
           type: String,
-          enum: ["sharesRoot", "imageOnCorrect", "passageOnCorrect"]
+          enum: ["word", "passage", "question", "image"],
+          required: true
+        },
+        id: { type: Schema.Types.ObjectId, required: true },
+        difficulty: {
+          type: Number,
+          min: 1,
+          max: 10,
+          required: true,
+          default: 1
         },
         isRequired: { type: Boolean, default: false }
       }
-    ]
+    ],
+    required: true,
+    default: []
   },
   sources: {
     type: {
@@ -74,35 +71,30 @@ const questionSchema = new Schema({
           value: { type: String, required: true }
         }
       },
-      text: {
+      passage: {
         type: {
           id: { type: Schema.Types.ObjectId, required: true },
           value: { type: String, required: true }
         }
       }
     }
-  }
+  },
+  curriculumId: { type: Schema.Types.ObjectId }
 })
 
 questionSchema.methods.imageOnCorrect = async function() {
-  const images = this.daisyChain.filter(d => d.type === "imageOnCorrect")
-  if (images.length) {
-    const id = sample(images).source.id
-    const image = await ImageModel.findById(id)
-    if (image) {
-      const base64 = image.base64()
-      return { base64 }
-    }
-  }
+  const images = this.daisyChain.filter(d => d.type === "image")
+  if (images.length === 0) return
+  const id = sample(images).id
+  const image = await ImageModel.findById(id)
+  return { url: image.url }
 }
 
 questionSchema.methods.passageOnCorrect = async function() {
-  const passages = this.daisyChain.filter(d => d.type === "passageOnCorrect")
-  if (passages.length === 0) {
-    return
-  }
-  passages.sort((a, b) => a.source.difficulty - b.source.difficulty)
-  const id = passages[0].source.id
+  const passages = this.daisyChain.filter(d => d.type === "passage")
+  if (passages.length === 0) return
+  passages.sort((a, b) => a.difficulty - b.difficulty)
+  const id = passages[0].id
   const passage = await PassageModel.findById(id)
   const value = passage.rawValue()
   return { id, title: passage.title, value }
@@ -110,20 +102,24 @@ questionSchema.methods.passageOnCorrect = async function() {
 
 questionSchema.statics.createDaisyChain = async function(question, user) {
   const questions = [question]
+  const userWordIds = user.words.map(w => String(w.id))
 
-  question.daisyChain.sort((a, b) => a.source.difficulty - b.source.difficulty)
+  question.daisyChain.sort((a, b) => a.difficulty - b.difficulty)
+
   const [seen, unseen] = partition(
-    question.daisyChain.filter(d => d.type === "sharesRoot"),
-    d => user.words.map(w => String(w.id)).indexOf(String(d.source.id)) > -1
+    question.daisyChain.filter(d => d.type === "word"),
+    d => userWordIds.indexOf(String(d.id)) > -1
   )
 
   const ids = []
   if (seen.length) {
-    ids.push(sample(seen).source.id)
+    ids.push(sample(seen).id)
   }
-  if (unseen.length > 0 && Math.random() > 0.85) {
-    ids.push(sample(unseen).source.id)
+  if (unseen.length > 0) {
+    // TODO: - uncomment && Math.random() > 0.85) {
+    ids.push(sample(unseen).id)
   }
+
   const pool = await this.find({ "sources.word.id": { $in: ids } })
   questions.push(...qForExp(pool, user, ids))
   return questions

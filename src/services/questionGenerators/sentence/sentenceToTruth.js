@@ -4,12 +4,10 @@ const { sample, without, flatten } = require("underscore")
 
 const { condensePrompt, condenseInteractive } = require("../../../lib/helpers")
 
-module.exports = async (passage, passages, sources) => {
-  const { tagged } = passage
-
+module.exports = async (passage, sources) => {
   const questions = []
 
-  for (const [idx, tag] of tagged.entries()) {
+  for (const [idx, tag] of passage.tagged.entries()) {
     const { value, isUnfocused, wordId, choiceSetId } = tag
 
     if (isUnfocused || (!wordId && !choiceSetId)) {
@@ -36,7 +34,7 @@ module.exports = async (passage, passages, sources) => {
 
       params.TYPE = "Passage to Truth"
       params.prompt = condensePrompt(
-        tagged.map((word, idx2) => {
+        passage.tagged.map((word, idx2) => {
           if (word.isSentenceConnector) {
             return word
           }

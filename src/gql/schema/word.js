@@ -27,6 +27,11 @@ type Tag {
   choiceSetIds: [String]
 }
 
+type PassageRelationship {
+  id: ID!
+  curriculumId: ID
+}
+
 type Word {
   value: String!
   isDecomposable: Boolean!
@@ -40,10 +45,7 @@ type Word {
   otherForms: [String]
   tags: [Tag]
   unverified: Unverified
-  unfilteredPassagesCount: Int
-  rejectedPassagesCount: Int
-  acceptedPassagesCount: Int
-  enrichedPassagesCount: Int
+  passages: [PassageRelationship]
 }
 
 type Enriched {

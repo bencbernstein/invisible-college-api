@@ -9,58 +9,46 @@ const QuestionModel = require("../../models/question")
 const { wordQuestions, wordQuestionTypes } = require("./word/index")
 const { passageQuestions } = require("./sentence/index")
 
-const createPassageQuestions = async () => {
-  const docs = await PassageModel.find({ status: "enriched" })
-  return flatten(await Promise.all(docs.map(d => passageQuestions(d, docs))))
-}
-
-const CREATE_WORDS_QS = true
-const CREATE_PASSAGE_QS = false
+const ZOOLOGY_ID = "5c12a6d47c95465e4f521903"
 
 exports.generate = async () => {
-  // await QuestionModel.remove({ passageOrWord: "" })
+  const query = { enriched: true, curriculumId: ZOOLOGY_ID }
+  const docs = await PassageModel.find(query)
+  let questions = await Promise.all(docs.slice(0, 1).map(passageQuestions))
+  questions = flatten(questions)
+  return process.exit(0)
+}
 
+exports.generateWordQuestions = async () => {
+  // await QuestionModel.remove({ passageOrWord: "word" })
   const words = await WordModel.find()
-  const passages = await PassageModel.find({ status: "enriched" })
+  const passages = await PassageModel.find()
 
-  if (CREATE_WORDS_QS) {
-    for (const TYPE of ["WORD_TO_IMG"] /*Object.keys(wordQuestionTypes)*/) {
-      try {
-        for (const group of chunk(words, 100)) {
-          const promises = group.map(w =>
-            wordQuestions(w, words, passages, TYPE)
-          )
-          const questions = flatten(await Promise.all(promises))
-          questions.forEach(q => {
-            q.passageOrWord = "word"
-            // console.log(q)
-          })
-          console.log(`Creating ${questions.length} ${TYPE} questions.`)
-          await QuestionModel.create(questions)
-        }
-      } catch (error) {
-        console.log(error)
-      }
-    }
-  }
+  const ALL = true
+  const TYPES = ALL ? Object.keys(wordQuestionTypes) : ["WORD_TO_IMG"]
 
-  if (CREATE_PASSAGE_QS) {
+  for (const TYPE of TYPES) {
     try {
-      const passage = passages.find(
-        p => String(p._id) === "5bc158d027412a001faaa75a"
-      )
-      const promises = [passage].map(p => passageQuestions(p, passages))
-      const questions = flatten(await Promise.all(promises))
-      questions.forEach(q => {
-        q.passageOrWord = "passage"
-        console.log(q)
-      })
-      // console.log(`Creating ${questions.length} passage questions.`)
-      // await QuestionModel.create(questions)
+      for (const group of chunk(
+        words.filter(word => word.value === "liver"),
+        100
+      )) {
+        //for (const group of chunk(words, 100)) {
+        const promises = group.map(w => wordQuestions(w, words, passages, TYPE))
+        const questions = flatten(await Promise.all(promises))
+        questions.forEach(q => {
+          q.passageOrWord = "word"
+          if (q.daisyChain.length) {
+            console.log(q)
+          }
+        })
+        console.log(`Creating ${questions.length} ${TYPE} questions.`)
+        // await QuestionModel.create(questions)
+      }
     } catch (error) {
       console.log(error)
     }
   }
 
-  process.exit(0)
+  return process.exit(0)
 }

@@ -38,11 +38,9 @@ const question = (
 }
 
 module.exports = (doc, redHerringDocs, sources, daisyChain) => {
-  if (!doc.isDecomposable) {
-    return []
-  }
+  if (!doc.isDecomposable) return []
 
-  const difficulty = hasMultipleRoots ? 2 : 1
+  const difficulty = doc.hasMultipleRoots() ? 2 : 1
 
   const questions = [
     question(doc, redHerringDocs, false, true, "Word to Roots", difficulty),

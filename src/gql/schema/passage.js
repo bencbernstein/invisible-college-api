@@ -1,4 +1,10 @@
+const mongoose = require("mongoose")
 const PassageModel = require("../../models/passage")
+const QuestionModel = require("../../models/question")
+
+const {
+  createPassageQuestions
+} = require("../../services/questionGenerators/sentence/index")
 
 const passageTypeDefs = `
 type Passage {
@@ -52,13 +58,17 @@ const passageResolvers = {
   },
   Mutation: {
     updatePassage(_, params) {
+      createPassageQuestions(params.id)
       return PassageModel.findByIdAndUpdate(
         params.id,
         JSON.parse(decodeURIComponent(params.update))
       )
     },
 
-    removePassage(_, params) {
+    async removePassage(_, params) {
+      await QuestionModel.remove({
+        "sources.passage.id": mongoose.Types.ObjectId(params.id)
+      })
       return PassageModel.findByIdAndRemove(params.id)
     }
   }

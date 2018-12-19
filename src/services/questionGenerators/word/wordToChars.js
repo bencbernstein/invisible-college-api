@@ -38,6 +38,8 @@ const question = (doc, redHerringDocs, oneRoot, allChars, TYPE, difficulty) => {
 }
 
 module.exports = (doc, redHerringDocs, sources, daisyChain) => {
+  if (doc.definition.length === 0) return []
+
   const questions = []
   let name
 
