@@ -3,14 +3,13 @@ const WordModel = require("../../../models/word")
 
 const { condensePrompt, condenseInteractive } = require("../../../lib/helpers")
 
-module.exports = async (passage, passages, sources) => {
-  const { tagged } = passage
+module.exports = async (passage, sources) => {
   const questions = []
 
-  const ids = tagged.map(tag => tag.wordId).filter(id => id)
+  const ids = passage.tagged.map(t => t.wordId).filter(id => id)
   const words = await WordModel.find({ _id: { $in: ids } }, { otherForms: 1 })
 
-  tagged.forEach((tag, tagIdx) => {
+  passage.tagged.forEach((tag, idx) => {
     const wordIdx = words.findIndex(word => word._id.equals(tag.wordId))
     const otherForms = wordIdx > -1 ? words[wordIdx].otherForms : []
     const allForms = shuffle(otherForms.concat(tag.value))
@@ -23,11 +22,10 @@ module.exports = async (passage, passages, sources) => {
       const answer = [{ value, prefill: false }]
 
       const prompt = condensePrompt(
-        tagged.map(
-          (tag2, tagIdx2) =>
-            tagIdx === tagIdx2
-              ? { highlight: true, value: redHerrings.shift() }
-              : { highlight: false, value: tag2.value }
+        passage.tagged.map((tag2, idx2) =>
+          idx === idx2
+            ? { highlight: true, value: redHerrings.shift() }
+            : { highlight: false, value: tag2.value }
         )
       )
 
@@ -43,9 +41,9 @@ module.exports = async (passage, passages, sources) => {
       ]
 
       const interactive = condenseInteractive(
-        tagged.map((tag2, tagIdx2) => ({
-          value: tagIdx === tagIdx2 ? redHerring : tag2.value,
-          correct: tagIdx === tagIdx2
+        passage.tagged.map((tag2, idx2) => ({
+          value: idx === idx2 ? redHerring : tag2.value,
+          correct: idx === idx2
         }))
       )
 

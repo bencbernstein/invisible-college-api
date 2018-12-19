@@ -1,4 +1,10 @@
+const mongoose = require("mongoose")
 const PassageModel = require("../../models/passage")
+const QuestionModel = require("../../models/question")
+
+const {
+  createPassageQuestions
+} = require("../../services/questionGenerators/sentence/index")
 
 const passageTypeDefs = `
 type Passage {
@@ -9,6 +15,7 @@ type Passage {
   source: String
   title: String
   esId: ID!
+  curriculumId: ID!
 }
 
 type Tagged {
@@ -26,7 +33,7 @@ type Tagged {
 
 extend type Query {
   getPassage(id: ID!): Passage
-  getPassages: [Passage]
+  getPassages(curriculumId: ID): [Passage]
 }
 
 extend type Mutation {
@@ -41,19 +48,27 @@ const passageResolvers = {
       return PassageModel.findById(params.id)
     },
 
-    getPassages() {
-      return PassageModel.find({ enriched: true })
+    getPassages(_, params) {
+      const query = { enriched: true }
+      if (params.curriculumId) {
+        query.curriculumId = params.curriculumId
+      }
+      return PassageModel.find(query)
     }
   },
   Mutation: {
     updatePassage(_, params) {
+      createPassageQuestions(params.id)
       return PassageModel.findByIdAndUpdate(
         params.id,
         JSON.parse(decodeURIComponent(params.update))
       )
     },
 
-    removePassage(_, params) {
+    async removePassage(_, params) {
+      await QuestionModel.remove({
+        "sources.passage.id": mongoose.Types.ObjectId(params.id)
+      })
       return PassageModel.findByIdAndRemove(params.id)
     }
   }

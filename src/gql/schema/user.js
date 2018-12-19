@@ -45,6 +45,7 @@ type User {
 type Query {
   users: [User]
   user(id: ID!): User
+  getStats(id: ID!): StatsResult
 }
 
 type Rank {
@@ -87,8 +88,6 @@ type Mutation {
   removeUser (
     id: ID!
   ): User
-
-  getStats(id: ID!): StatsResult 
 }
 
 schema {
@@ -105,46 +104,6 @@ const userResolvers = {
 
     users() {
       return UserModel.find().catch(err => new Error(err))
-    }
-  },
-  Mutation: {
-    addUser(_, params) {
-      return UserModel.create(params)
-    },
-
-    async loginUser(_, params) {
-      const { email, password } = params
-      const user = await UserModel.findOne({ email })
-
-      if (user) {
-        const result = await user.comparePassword(password)
-        if (result === true) {
-          return user
-        }
-        throw new Error(
-          result === false ? "Incorrect password." : result.message
-        )
-      }
-
-      throw new Error("Email not found.")
-    },
-
-    async createUser(_, params) {
-      const user = await UserModel.findOne({ email: params.email })
-      if (user) throw new Error("Email taken.")
-      return UserModel.create(params)
-    },
-
-    removeUser(_, params) {
-      return UserModel.findByIdAndRemove(params.id)
-    },
-
-    updateUser(_, params) {
-      return UserModel.findByIdAndUpdate(
-        params.id,
-        { $set: { email: params.email } },
-        { new: true }
-      )
     },
 
     async getStats(_, params) {
@@ -191,6 +150,46 @@ const userResolvers = {
 
           return { user, ranks }
         })
+    }
+  },
+  Mutation: {
+    addUser(_, params) {
+      return UserModel.create(params)
+    },
+
+    async loginUser(_, params) {
+      const { email, password } = params
+      const user = await UserModel.findOne({ email })
+
+      if (user) {
+        const result = await user.comparePassword(password)
+        if (result === true) {
+          return user
+        }
+        throw new Error(
+          result === false ? "Incorrect password." : result.message
+        )
+      }
+
+      throw new Error("Email not found.")
+    },
+
+    async createUser(_, params) {
+      const user = await UserModel.findOne({ email: params.email })
+      if (user) throw new Error("Email taken.")
+      return UserModel.create(params)
+    },
+
+    removeUser(_, params) {
+      return UserModel.findByIdAndRemove(params.id)
+    },
+
+    updateUser(_, params) {
+      return UserModel.findByIdAndUpdate(
+        params.id,
+        { $set: { email: params.email } },
+        { new: true }
+      )
     }
   }
 }

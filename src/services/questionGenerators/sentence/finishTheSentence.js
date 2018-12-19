@@ -12,12 +12,7 @@ const createPartialSentence = (tagged, start, len) =>
     .join("")
     .trim()
 
-module.exports = async (
-  passage,
-  passages,
-  sources,
-  generatePartialSentences = false
-) => {
+module.exports = async (passage, sources, generatePartialSentences = false) => {
   const questions = []
   const partialSentences = []
   const { tagged, id } = passage
