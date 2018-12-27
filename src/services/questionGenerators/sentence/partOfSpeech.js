@@ -79,7 +79,7 @@ const reversed = (passage, sources) => {
   const posCount = passage.tagged.filter(correct).length
   const answerCount = sample(range(1, Math.min(3, posCount) + 1))
 
-  const value = `Find ${answerCount} - ${
+  const value = `Find ${answerCount} ${
     PART_OF_SPEECH[pos][answerCount === 1 ? "singular" : "plural"]
   }`
   const prompt = [{ value, highlight: false }]

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose")
 const pos = require("pos")
 const elasticsearch = require("elasticsearch")
-const { flatten } = require("lodash")
+const { flatten, get } = require("lodash")
 
 const PassageModel = require("../../models/passage")
 const WordModel = require("../../models/word")
@@ -208,25 +208,25 @@ const tagSentences = (sentences, words, choiceSets) =>
 const tagSentence = (sentence, words, choiceSets) => {
   const lexed = new pos.Lexer().lex(sentence)
   const tagger = new pos.Tagger()
-  const tagged = tagger.tag(lexed).map(t => ({ value: t[0], pos: t[1] }))
 
-  tagged.forEach(tag => {
-    if (tag.value === tag.pos) {
-      delete tag.pos
-      tag.isPunctuation = true
-    } else if (CONNECTORS.indexOf(tag.value) > -1) {
-      tag.isConnector = true
-    } else {
-      const wordIdx = words.findIndex(w => w.values.indexOf(tag.value) > -1)
-      if (wordIdx > -1) {
-        tag.wordId = words[wordIdx]._id
-      }
-      const choiceSetIdx = choiceSets.findIndex(
-        c => c.choices.indexOf(tag.value) > -1
-      )
-      if (choiceSetIdx > -1) {
-        tag.choiceSetId = choiceSets[choiceSetIdx]._id
-      }
+  const tagged = tagger.tag(lexed).map(tag => {
+    const [value, pos] = tag
+    const isPunctuation = value === pos
+    const isConnector = CONNECTORS.includes(value)
+    const isUnfocused = isConnector
+    const wordId = get(words.find(w => w.values.includes(value)), "_id")
+    const choiceSetId = get(
+      choiceSets.find(c => c.choices.includes(value)),
+      "_id"
+    )
+    return {
+      value,
+      pos,
+      isPunctuation,
+      isConnector,
+      wordId,
+      choiceSetId,
+      isUnfocused
     }
   })
 

@@ -61,6 +61,8 @@ passageSchema.statics.sourcesForNextUnseen = async function(
     curriculumId
   }).sort("difficulty")
 
+  console.log(passage)
+
   await UserModel.findByIdAndUpdate(
     { _id: user._id },
     { $push: { passages: { id: passage._id } } }
